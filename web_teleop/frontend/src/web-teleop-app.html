@@ -42,6 +42,8 @@
       last-message="{{torsoHeight}}"
       on-message="_handleTorsoHeight"
     ></ros-topic>
+
+    <!-- Torso -->
     <ros-service                                                                 
       id="torsoService"
       on-response="_handleTorsoSuccess"
@@ -49,6 +51,36 @@
       name="/web_teleop/set_torso"
       ros="{{ros}}"
       service-type="web_teleop/SetTorso"
+    ></ros-service>
+
+    <!-- Head -->
+    <ros-service                                                                 
+      id="headService"
+      on-response="_handleHeadSuccess"
+      on-fail="_handleHeadError"
+      name="/web_teleop/set_head"
+      ros="{{ros}}"
+      service-type="web_teleop/SetHead"
+    ></ros-service>
+
+    <!-- Gripper -->
+    <ros-service                                                                 
+      id="gripperService"
+      on-response="_handleGripperSuccess"
+      on-fail="_handleGripperError"
+      name="/web_teleop/set_gripper"
+      ros="{{ros}}"
+      service-type="web_teleop/SetGripper"
+    ></ros-service>
+
+    <!-- Arm -->
+    <ros-service                                                                 
+      id="armService"
+      on-response="_handleArmSuccess"
+      on-fail="_handleArmError"
+      name="/web_teleop/set_arm"
+      ros="{{ros}}"
+      service-type="web_teleop/SetArm"
     ></ros-service>
 
     <ros-topic
@@ -79,13 +111,59 @@
         <div class="flex"></div>
       </div>
       <div class="layout horizontal">
-        <paper-button>Left</paper-button>
-        <paper-button>Back</paper-button>
-        <paper-button>Right</paper-button>
+        <paper-button
+          on-down="_startLeftRotation"
+          on-up="_endBaseCommand"
+        >Left</paper-button>
+        <paper-button
+          on-down="_startBackward"
+          on-up="_endBaseCommand"
+        >Back</paper-button>
+        <paper-button
+          on-down="_startRightRotation"
+          on-up="_endBaseCommand"
+        >Right</paper-button>
       </div>
     </div>
 
-    {{status}}
+    <div class="layout horizontal center">
+      <h3>Pan:</h3>                                       
+      <paper-slider min="-1.57" max="1.57" step="0.01" editable                       
+        value="{{desiredHeadPanDirection}}"></paper-slider>
+      <h3>Tilt:</h3>
+      <paper-slider min="-0.785" max="1.57" step="0.01" editable                       
+        value="{{desiredHeadTiltDirection}}"></paper-slider>
+      <paper-button on-tap="_setHead">Set head</paper-button>
+    </div>
+
+    <paper-button on-tap="_gripperOpen">Gripper open</paper-button>
+    <paper-button on-tap="_gripperClose">Gripper close</paper-button>
+
+    <div class="layout horizontal center">
+        <h3>shoulder_pan_joint:</h3>                                       
+        <paper-slider min="-1.6" max="1.6" step="0.01" editable                       
+          value="{{shoulder_pan_joint}}"></paper-slider>
+        <h3>shoulder_lift_joint:</h3>
+        <paper-slider min="-1.22" max="1.51" step="0.01" editable                       
+          value="{{shoulder_lift_joint}}"></paper-slider>
+        <h3>upperarm_roll_joint:</h3>                                       
+        <paper-slider min="-3.14" max="3.14" step="0.01" editable                       
+          value="{{upperarm_roll_joint}}"></paper-slider>
+        <h3>elbow_flex_joint:</h3>
+        <paper-slider min="-2.25" max="2.25" step="0.01" editable                       
+          value="{{elbow_flex_joint}}"></paper-slider>
+        <h3>forearm_roll_joint:</h3>                                       
+        <paper-slider min="-3.14" max="3.14" step="0.01" editable                       
+          value="{{forearm_roll_joint}}"></paper-slider>
+        <h3>wrist_flex_joint:</h3>
+        <paper-slider min="-2.18" max="2.18" step="0.01" editable                       
+          value="{{wrist_flex_joint}}"></paper-slider>
+        <h3>wrist_roll_joint:</h3>
+        <paper-slider min="-3.14" max="3.14" step="0.01" editable                       
+          value="{{wrist_roll_joint}}"></paper-slider>
+        <paper-button on-tap="_setArm">Set arm</paper-button>
+      </div>
+
     <div id="camera">
       <img src="//[[hostname]]:8000/stream?topic=/head_camera/rgb/image_raw"></img>
     </div>
@@ -146,6 +224,60 @@
         this.status = 'Error: ' + evt.detail;
       }
 
+      _setHead() {
+        this.status = 'Setting head pan to ' + this.desiredHeadPanDirection + ' radians ' +
+                      'and tilt to ' + this.desiredHeadTiltDirection + ' radians...';
+        this.$.headService.call({pan: this.desiredHeadPanDirection,
+                                  tilt: this.desiredHeadTiltDirection});
+      }
+      _handleHeadSuccess() {
+        this.status = 'Set head to ' + this.desiredHeadPanDirection + ' radians ' +
+                      'and tilt to ' + this.desiredHeadTiltDirection + ' radians';
+      }
+      _handleHeadError(evt) {
+        this.status = 'Error: ' + evt.detail;
+      }
+
+      _gripperOpen() {
+        this.status = 'Changing gripper to open...';
+        this._setGripper(true);
+      }
+
+      _gripperClose() {
+        this.status = 'Changing gripper to closed...';
+        this._setGripper(false);
+      }
+
+      _setGripper(val) {
+        this.$.gripperService.call({to_open: val});
+      }
+
+      _handleHeadSuccess() {
+        this.status = 'Set head to ' + this.desiredHeadPanDirection + ' radians ' +
+                      'and tilt to ' + this.desiredHeadTiltDirection + ' radians';
+      }
+      _handleHeadError(evt) {
+        this.status = 'Error: ' + evt.detail;
+      }
+
+      _setArm() {
+        this.status = 'Moving the arm...';
+        this.$.armService.call({shoulder_pan_joint: this.shoulder_pan_joint,
+                                shoulder_lift_joint: this.shoulder_pan_joint,
+                                upperarm_roll_joint: this.upperarm_roll_joint,
+                                elbow_flex_joint: this.elbow_flex_joint,
+                                forearm_roll_joint: this.elbow_flex_joint,
+                                wrist_flex_joint: this.wrist_flex_joint,
+                                wrist_roll_joint: this.wrist_roll_joint});
+      }
+
+      _handleArmSuccess() {
+        this.status = 'Moved arm';
+      }
+      _handleArmError(evt) {
+        this.status = 'Error: ' + evt.detail;
+      }
+
       _startForward(evt) {
         evt.preventDefault(); // Prevent right-click menu from showing up after long press on mobile
         this.status = 'Driving forward...';
@@ -165,6 +297,78 @@
               x: 0,
               y: 0,
               z: 0 // Set rads/s to turn
+            }
+          });
+        }, 10); // Run this function every 10ms, or approximately 100 times per second.
+      }
+
+      _startBackward(evt) {
+        evt.preventDefault(); // Prevent right-click menu from showing up after long press on mobile
+        this.status = 'Driving backward...';
+        var baseTopic = this.$.baseTopic; // Get <ros-topic>
+        if (this.baseCommand) {
+          // The timer should not be set at this point, but clear it just in case
+          clearInterval(this.baseCommand);
+        }
+        this.baseCommand = setInterval(function() {
+          baseTopic.publish({
+            linear: {
+              x: -0.1, // Set positive or negative meters/s to drive
+              y: 0,
+              z: 0
+            },
+            angular: {
+              x: 0,
+              y: 0,
+              z: 0 // Set rads/s to turn
+            }
+          });
+        }, 10); // Run this function every 10ms, or approximately 100 times per second.
+      }
+
+      _startLeftRotation(evt) {
+        evt.preventDefault(); // Prevent right-click menu from showing up after long press on mobile
+        this.status = 'Turning left...';
+        var baseTopic = this.$.baseTopic; // Get <ros-topic>
+        if (this.baseCommand) {
+          // The timer should not be set at this point, but clear it just in case
+          clearInterval(this.baseCommand);
+        }
+        this.baseCommand = setInterval(function() {
+          baseTopic.publish({
+            linear: {
+              x: 0, // Set positive or negative meters/s to drive
+              y: 0,
+              z: 0
+            },
+            angular: {
+              x: 0,
+              y: 0,
+              z: 0.2 // Set rads/s to turn
+            }
+          });
+        }, 10); // Run this function every 10ms, or approximately 100 times per second.
+      }
+
+      _startRightRotation(evt) {
+        evt.preventDefault(); // Prevent right-click menu from showing up after long press on mobile
+        this.status = 'Turning right...';
+        var baseTopic = this.$.baseTopic; // Get <ros-topic>
+        if (this.baseCommand) {
+          // The timer should not be set at this point, but clear it just in case
+          clearInterval(this.baseCommand);
+        }
+        this.baseCommand = setInterval(function() {
+          baseTopic.publish({
+            linear: {
+              x: 0, // Set positive or negative meters/s to drive
+              y: 0,
+              z: 0
+            },
+            angular: {
+              x: 0,
+              y: 0,
+              z: -0.2 // Set rads/s to turn
             }
           });
         }, 10); // Run this function every 10ms, or approximately 100 times per second.

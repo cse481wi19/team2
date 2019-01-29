@@ -127,8 +127,8 @@ class Head(object):
 
         traj = JointTrajectory()
         # TODO: Add joint names to the list
-        traj.joint_names.append(TILT_JOINT)
         traj.joint_names.append(PAN_JOINT)
+        traj.joint_names.append(TILT_JOINT)
 
         # TODO: Add trajectory point created above to trajectory
         traj.points.append(point)
