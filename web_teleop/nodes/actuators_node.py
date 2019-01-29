@@ -2,7 +2,10 @@
 
 import robot_api
 import rospy
-from web_teleop.srv import SetTorso, SetTorsoResponse, SetHead, SetHeadResponse, SetGripper, SetGripperResponse, SetArm, SetArmResponse
+from web_teleop.srv import SetTorso, SetTorsoResponse
+from web_teleop.srv import SetHead, SetHeadResponse
+from web_teleop.srv import SetGripper, SetGripperResponse
+from web_teleop.srv import SetArm, SetArmResponse
 
 
 def wait_for_time():
