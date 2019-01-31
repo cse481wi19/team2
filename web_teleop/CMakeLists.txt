@@ -8,8 +8,8 @@ project(web_teleop)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  joint_state_reader
   message_generation
+  joint_state_reader
   robot_api
   roscpp
   rospy
@@ -73,8 +73,8 @@ add_service_files(
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
 )
 
 ################################################
@@ -109,7 +109,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES web_teleop
- CATKIN_DEPENDS joint_state_reader robot_api roscpp rospy
+ CATKIN_DEPENDS message_runtime joint_state_reader robot_api roscpp rospy
 #  DEPENDS system_lib
 )
 

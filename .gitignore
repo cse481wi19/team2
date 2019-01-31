@@ -1,3 +1,5 @@
 *.pyc
 *~
 cmake*
+
+web_teleop/frontend/\.vscode/

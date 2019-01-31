@@ -1,2 +1,3 @@
-bool to_open
+bool open
+float64 effort
 ---

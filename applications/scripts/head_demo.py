@@ -42,7 +42,6 @@ def main():
             argv[5])
         head = robot_api.Head()
         head.look_at(frame_id,x,y,z)
-        # rospy.logerr('Not implemented.')
     elif command == 'pan_tilt':
         if len(argv) < 4:
             print_usage()
@@ -50,7 +49,6 @@ def main():
         pan, tilt = float(argv[2]), float(argv[3])
         head = robot_api.Head()
         head.pan_tilt(pan, tilt)
-        # rospy.logerr('Not implemented.')
     elif command == 'eyes':
         if len(argv) < 3:
             print_usage()

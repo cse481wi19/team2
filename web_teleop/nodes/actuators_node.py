@@ -21,45 +21,50 @@ class ActuatorServer(object):
         self._head = robot_api.Head()
         self._gripper = robot_api.Gripper()
         self._arm = robot_api.Arm()
+
     def handle_set_torso(self, request):
+        # type: (SetTorsoRequest) -> None
         # TODO: move the torso to the requested height
+        print "web_teleop/set_torso: setting height to %.2f" % request.height
         self._torso.set_height(request.height)
         return SetTorsoResponse()
-    
+
     def handle_set_head(self, request):
+        # type: (SetHeadRequest) -> None
+        print "web_teleop/set_head: setting head. pan: %.2f, tilt: %.2f" % (request.pan, request.tilt)
         self._head.pan_tilt(request.pan, request.tilt)
         return SetHeadResponse()
-    
+
     def handle_set_gripper(self, request):
-        if request.to_open:
+        if (request.open):
+            print "web_teleop/set_gripper: opening gripper"
             self._gripper.open()
         else:
-            self._gripper.close()
+            print "web_teleop/set_gripper: closing gripper with effort %.2f" % request.effort
+            self._gripper.close(request.effort)
         return SetGripperResponse()
 
     def handle_set_arm(self, request):
-        arm_values = [request.shoulder_pan_joint,
-                      request.shoulder_lift_joint,
-                      request.upperarm_roll_joint,
-                      request.elbow_flex_joint,
-                      request.forearm_roll_joint,
-                      request.wrist_flex_joint,
-                      request.wrist_roll_joint]
-        self._arm.move_to_joints(robot_api.ArmJoints.from_list(arm_values))
+        aj = robot_api.ArmJoints.from_list(request.values)
+        print "web_teleop/set_arm: setting arm: %s" % str(request.values)
+        self._arm.move_to_joints(aj)
         return SetArmResponse()
+
 
 def main():
     rospy.init_node('web_teleop_actuators')
     wait_for_time()
     server = ActuatorServer()
+    print "web_teleop: starting service..."
     torso_service = rospy.Service('web_teleop/set_torso', SetTorso,
-                                  server.handle_set_torso)
+                                    server.handle_set_torso)
     head_service = rospy.Service('web_teleop/set_head', SetHead,
-                                  server.handle_set_head)
+                                    server.handle_set_head)
     gripper_service = rospy.Service('web_teleop/set_gripper', SetGripper,
-                                  server.handle_set_gripper)
+                                    server.handle_set_gripper)
     arm_service = rospy.Service('web_teleop/set_arm', SetArm,
-                                  server.handle_set_arm)
+                                    server.handle_set_arm)
+    print "web_teleop: service running..."
     rospy.spin()
 
 
