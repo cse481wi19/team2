@@ -42,7 +42,7 @@ class Base(object):
         # TODO: do something
         pass
 
-    def go_forward(self, distance, speed=0.1):
+    def go_forward(self, distance, speed=0.5):
         """Moves the robot a certain distance.
 
         It's recommended that the robot move slowly. If the robot moves too
@@ -67,8 +67,9 @@ class Base(object):
         curr_dist = 0
         while abs(distance) - curr_dist >= TOLERANCE:
             print("curr_dist:", curr_dist)
+            linear_speed = max(0.05, min(speed, abs(distance) - curr_dist))
             # TODO: you will probably need to do some math in this loop to check the CONDITION
-            self.move(dir * speed, 0)
+            self.move(dir * linear_speed, 0)
             rate.sleep()
             
             curr_pos = rospy.wait_for_message("/odom", Odometry)
@@ -76,7 +77,7 @@ class Base(object):
             curr_dist = distance_fn(start.pose.pose.position, curr.pose.pose.position)
         print("final_dist:", curr_dist)
 
-    def turn(self, angular_distance, speed=0.5):
+    def turn(self, angular_distance, speed=1):
         """Rotates the robot a certain angle.
 
         Args:
@@ -100,8 +101,9 @@ class Base(object):
         print("start_yaw: ", start_yaw, "angular_distance", angular_distance)
         prev_yaw = start_yaw
         while abs(angular_distance) - ang_rotated > 0:
+            angular_speed = max(0.05, min(speed, abs(angular_distance) - ang_rotated))
             # TODO: you will probably need to do some math in this loop to check the CONDITION
-            self.move(0, direction * speed)
+            self.move(0, direction * angular_speed)
             rate.sleep()
 
             curr_pos = rospy.wait_for_message("/odom", Odometry)
