@@ -24,6 +24,7 @@ class NavPath(object):
                 self._path.append(curr_location)
         size = 0.05
         marker = Marker(
+                ns="PathMarker",
                 type=Marker.LINE_STRIP,
                 id=0,
                 lifetime=rospy.Duration(10),
@@ -32,6 +33,7 @@ class NavPath(object):
                 scale=Vector3(size, 0, 0),
                 header=Header(frame_id='odom', stamp=rospy.Time.now()),
                 color=ColorRGBA(0.0, 1.0, 0.0, 0.8))
+
         self._marker_publisher.publish(marker)
         
                 
