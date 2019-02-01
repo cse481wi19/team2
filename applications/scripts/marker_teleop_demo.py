@@ -144,7 +144,7 @@ class MarkerTele(object):
 
 
 def main():
-    rospy.init_node('my_node')
+    rospy.init_node('marker_teleop')
     rospy.sleep(0.5)
 
     tele = MarkerTele()
