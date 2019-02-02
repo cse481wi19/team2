@@ -1,36 +1,57 @@
-#!/usr/bin/env python
+#!/usr/bin/env python                                                                                  
+                                                                                                       
+import rospy     
+import pickle
+import actionlib
+from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
+from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseGoal, MoveBaseAction
 
-import rospy
+class Annotator(object):                                
+    DEFAULT_SAVE_FILE_NAME = "annotator_positions.pkl"
 
-from visualization_msgs.msg import Marker
-from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
-from std_msgs.msg import Header, ColorRGBA
+    def __init__(self, save_file_path=None):
+        if save_file is None:
+            print("Creating save file: ", DEFAULT_SAVE_FILE_NAME)
+            self._save_file = open(DEFAULT_SAVE_FILE_NAME, "wb")
+            self._positions = {}
+        else:
+            print("Given save file: ", save_file_path)
+            self._save_file = open(save_file_path, "wb")
+            self._positions = pickle.load(self._save_file)
+        self._client = actionlib.SimpleActionClient('move_base/', MoveBaseAction)
+        self._client.wait_for_server()
 
-def wait_for_time():                                              
-    """Wait for simulated time to begin.                          
-    """                                                           
-    while rospy.Time().now().to_sec() == 0:                       
-        pass
+    def __save_file__(self):
+        pickle.dump(self._positions, self._save_file)
 
-def print_intro():
-    print("Welcome to the map annotator!")
-    print("Commands:")
-    print("list: List saved poses.")
-    print("save <name>: Save the robot's current pose as <name>. Overwrites if <name> already exists.")
-    print("delete <name>: Delete the pose given by <name>.")
-    print("goto <name>: Sends the robot to the pose given by <name>.")
-    print("help: Show this list of commands")
+    def save_position(self, name):
+        pose = rospy.wait_for_message("/amcl_pose", PoseWithCovarianceStamped)
+        self._positions[name] = pose
+        self.__save_file__()
+    
+    def get_positions(self):
+        return self._positions.keys()
 
-def main():
-    running = True
-    while running:
-        user_input = input()
-        print user_input
-    # rospy.init_node('annotator_node')
-    # wait_for_time()
-    # marker_publisher = rospy.Publisher('visualization_marker', Marker, queue_size=10)
-    # rospy.sleep(0.5)
-    # show_text_in_rviz(marker_publisher, "RoboEats is cool.")
+    def delete_position(self, name):
+        if name in self._positions:
+            self._positions.pop(name)
+            self.__save_file__()
 
-if __name__ == '__main__':
-  main()
+    def goto_position(self, name):
+        if name in self._positions:
+            position = self._positions[name]
+
+            goal = MoveBaseActionGoal()
+        
+            goal_trajectory = MoveBaseGoal()
+            pose_stamped = PoseStamped()
+
+            pose_stamped.pose = position.pose.pose
+            pose_stamped.header.frame_id = "map"
+
+            goal_trajectory.target_pose = pose_stamped
+            goal.goal = goal_trajectory
+
+            goal.header.frame_id = "map"
+            self._client.send_goal(goal_trajectory)
+            self._client.wait_for_result()
