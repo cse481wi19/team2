@@ -3,26 +3,36 @@
 import rospy     
 import pickle
 import actionlib
+import os
+
 from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
 from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseGoal, MoveBaseAction
 
 class Annotator(object):                                
-    DEFAULT_SAVE_FILE_NAME = "annotator_positions.pkl"
 
-    def __init__(self, save_file_path=None):
-        if save_file is None:
-            print("Creating save file: ", DEFAULT_SAVE_FILE_NAME)
-            self._save_file = open(DEFAULT_SAVE_FILE_NAME, "wb")
-            self._positions = {}
+    def __init__(self, save_file_path="annotator_positions.pkl"):
+        print("Given save file path: " + save_file_path)
+        if os.path.isfile(save_file_path):
+            print("File already exists, loading saved positions.")
+            with open(save_file_path, "rb") as save_file:
+                try:
+                    self._positions = pickle.load(save_file)
+                except EOFError:
+                    # this can be caused if the file is empty.
+                    self._positions = {}
+                print("File loaded...")
         else:
-            print("Given save file: ", save_file_path)
-            self._save_file = open(save_file_path, "wb")
-            self._positions = pickle.load(self._save_file)
+            self._positions = {}
+
+        self._save_file_path = save_file_path
         self._client = actionlib.SimpleActionClient('move_base/', MoveBaseAction)
         self._client.wait_for_server()
 
     def __save_file__(self):
-        pickle.dump(self._positions, self._save_file)
+        with open(self._save_file_path, "wb") as save_file:
+            pickle.dump(self._positions, save_file, protocol=pickle.HIGHEST_PROTOCOL)
+            # flush() saves file immediately instead of buffering changes.
+            save_file.flush()
 
     def save_position(self, name):
         pose = rospy.wait_for_message("/amcl_pose", PoseWithCovarianceStamped)
@@ -41,17 +51,9 @@ class Annotator(object):
         if name in self._positions:
             position = self._positions[name]
 
-            goal = MoveBaseActionGoal()
-        
-            goal_trajectory = MoveBaseGoal()
-            pose_stamped = PoseStamped()
+            goal = MoveBaseGoal()
+            goal.target_pose.pose = position.pose.pose
+            goal.target_pose.header.frame_id = "map"
 
-            pose_stamped.pose = position.pose.pose
-            pose_stamped.header.frame_id = "map"
-
-            goal_trajectory.target_pose = pose_stamped
-            goal.goal = goal_trajectory
-
-            goal.header.frame_id = "map"
-            self._client.send_goal(goal_trajectory)
+            self._client.send_goal(goal)
             self._client.wait_for_result()

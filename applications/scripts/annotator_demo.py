@@ -24,6 +24,7 @@ def print_intro():
 
 def main():
     rospy.init_node("annotator_node")
+    wait_for_time()
     annotator = Annotator()
     running = True
     while running:
@@ -32,31 +33,38 @@ def main():
             # string is empty, ignore
             continue
         args = user_input.split(" ", 1)
-        print arg, user_input
         cmd = args[0]
         if cmd == "list":
             positions = annotator.get_positions()
             print("Poses:")
             for position in positions:
-                print("\t", position)
+                print("\t" + position)
         elif cmd == "save":
-            name = args[1]
-            annotator.save_position(name)
-            print("Position '", name, "'was saved!")
+            if len(args) == 2:
+                name = args[1]
+                annotator.save_position(name)
+                print("Position '" + name + "' was saved!")
+            else:
+                print("No name given.")
         elif cmd == "delete":
-            name = args[1]
-            annotator.delete_position(name)
-            print("Position '", name, "'was deleted!")
+            if len(args) == 2:
+                name = args[1]
+                annotator.delete_position(name)
+                print("Position '" + name + "' was deleted!")
+            else:
+                print("No name given.")
         elif cmd == "goto":
-            name = args[1]
-            pass
+            if len(args) == 2:
+                name = args[1]
+                annotator.goto_position(name)
+                print("Going to position '" + name + "'.")
+            else:
+                print("No name given.")
         elif cmd == "help":
             print_commands()
-    # rospy.init_node('annotator_node')
-    # wait_for_time()
-    # marker_publisher = rospy.Publisher('visualization_marker', Marker, queue_size=10)
-    # rospy.sleep(0.5)
-    # show_text_in_rviz(marker_publisher, "RoboEats is cool.")
+        elif cmd == "stop":
+            running = False
+        print("")
 
 if __name__ == '__main__':
   main()
