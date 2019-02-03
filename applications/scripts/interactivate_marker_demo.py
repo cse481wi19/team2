@@ -27,50 +27,38 @@ class Server(object):
         int_marker.pose.position.x = 1
         int_marker.pose.orientation.w = 1
 
-        marker = Marker()
-        marker.type = Marker.SPHERE
-        marker.pose.orientation.w = 1
-        marker.scale.x = 0.45
-        marker.scale.y = 0.25
-        marker.scale.z = 0.25
-        marker.color.r = 0.0
-        marker.color.g = 0.5
-        marker.color.b = 0.5
-        marker.color.a = 1.0
+        rotation_ring_control = InteractiveMarkerControl()
+        rotation_ring_control.name = "position_control"
+        rotation_ring_control.always_visible = True
+        rotation_ring_control.orientation.w = 1
+        rotation_ring_control.orientation.x = 0
+        rotation_ring_control.orientation.y = 1
+        rotation_ring_control.orientation.z = 0
+        rotation_ring_control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+        int_marker.controls.append(rotation_ring_control)
 
-        control1 = InteractiveMarkerControl()
-        control1.name = "position_control"
-        control1.always_visible = True
-        control1.markers.append(marker)
-        control1.orientation.w = 1
-        control1.orientation.x = 0
-        control1.orientation.y = 1
-        control1.orientation.z = 0
-        control1.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
-        int_marker.controls.append(control1)
+        arrow_marker = Marker()
+        arrow_marker.type = Marker.ARROW
+        arrow_marker.pose.orientation.w = 1
+        arrow_marker.pose.position.z = 0.25
+        arrow_marker.scale.x = 0.6
+        arrow_marker.scale.y = 0.15
+        arrow_marker.scale.z = 0.15
+        arrow_marker.color.r = 0.0
+        arrow_marker.color.g = 0.5
+        arrow_marker.color.b = 0.5
+        arrow_marker.color.a = 1.0
 
-        marker2 = Marker()
-        marker2.type = Marker.ARROW
-        marker2.pose.orientation.w = 1
-        marker2.pose.position.z = 0.25
-        marker2.scale.x = 0.35
-        marker2.scale.y = 0.1
-        marker2.scale.z = 0.1
-        marker2.color.r = 0.0
-        marker2.color.g = 0.5
-        marker2.color.b = 0.5
-        marker2.color.a = 1.0
-
-        control2 = InteractiveMarkerControl()
-        control2.name = "rotation_control"
-        control2.always_visible = True
-        control2.markers.append(marker2)
-        control2.orientation.w = 1
-        control2.orientation.x = 0
-        control2.orientation.y = 1
-        control2.orientation.z = 0
-        control2.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-        int_marker.controls.append(control2)
+        position_control = InteractiveMarkerControl()
+        position_control.name = "rotation_control"
+        position_control.always_visible = True
+        position_control.markers.append(arrow_marker)
+        position_control.orientation.w = 1
+        position_control.orientation.x = 0
+        position_control.orientation.y = 1
+        position_control.orientation.z = 0
+        position_control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
+        int_marker.controls.append(position_control)
 
         self._server.insert(int_marker, self.cb)
         self._server.applyChanges()

@@ -34,8 +34,9 @@ class Annotator(object):
             # flush() saves file immediately instead of buffering changes.
             save_file.flush()
 
-    def save_position(self, name):
-        pose = rospy.wait_for_message("/amcl_pose", PoseWithCovarianceStamped)
+    def save_position(self, name, pose=None):
+        if pose is None:
+            pose = rospy.wait_for_message("/amcl_pose", PoseWithCovarianceStamped).pose.pose
         self._positions[name] = pose
         self.__save_file__()
     
@@ -52,7 +53,7 @@ class Annotator(object):
             position = self._positions[name]
 
             goal = MoveBaseGoal()
-            goal.target_pose.pose = position.pose.pose
+            goal.target_pose.pose = position
             goal.target_pose.header.frame_id = "map"
 
             self._client.send_goal(goal)
