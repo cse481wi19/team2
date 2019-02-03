@@ -29,17 +29,24 @@ class AnnotatorServer(object):
 
         self.INITIAL_POSE = Pose()
 
+        # Initialize saved markers
+        for name, pose in self._annotator.get_position_items():
+            self.__create_int_marker__(name, pose)
+        
+        self.__pub_pose_names__()
+        print("Initialization finished...")
+
     def __pub_pose_names__(self):
         pose_names = PoseNames()
-        pose_names.names = self._annotator.get_positions()
+        pose_names.names = self._annotator.get_position_names()
         self._pose_names_pub.publish(pose_names)
 
-    def __int_marker_cb__(self, input):
+    def __update_int_marker__(self, input):
         if (input.event_type == InteractiveMarkerFeedback.MOUSE_UP):
             name = input.marker_name
             new_pose = self._int_marker_server.get(name).pose
+            # Overwrite the previous pose with the new pose
             self._annotator.save_position(name, new_pose)
-
 
     def __create_int_marker__(self, name, pose):
         print("creating marker with pose: " + str(pose))
@@ -82,13 +89,22 @@ class AnnotatorServer(object):
         position_control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
         int_marker.controls.append(position_control)
 
-        self._int_marker_server.insert(int_marker, self.__int_marker_cb__)
+        self._int_marker_server.insert(int_marker, self.__update_int_marker__)
         self._int_marker_server.applyChanges()
 
-    def create(self, name):
-        self._annotator.save_position(name, self.INITIAL_POSE)
-        self.__create_int_marker__(name, self.INITIAL_POSE)
+    def create(self, name, pose=None):
+        if pose is None:
+            pose = self.INITIAL_POSE
+        self._annotator.save_position(name, pose)
+        self.__create_int_marker__(name, pose)
         self.__pub_pose_names__()
+    
+    def delete(self, name):
+        if self._annotator.exists(name):
+            self._annotator.delete_position(name)
+            self._int_marker_server.erase(name)
+            self._int_marker_server.applyChanges()
+            self.__pub_pose_names__()
 
     def handle_callback(self, user_action_msg):
         cmd = user_action_msg.command
@@ -96,8 +112,7 @@ class AnnotatorServer(object):
         if cmd == UserAction.CREATE:
             self.create(name)
         elif cmd == UserAction.DELETE:
-            self._annotator.delete_position(name)
-            self.__pub_pose_names__()
+            self.delete(name)
         elif cmd == UserAction.GOTO:
             self._annotator.goto_position(name)
         

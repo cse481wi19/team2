@@ -35,7 +35,7 @@ def main():
         args = user_input.split(" ", 1)
         cmd = args[0]
         if cmd == "list":
-            positions = annotator.get_positions()
+            positions = annotator.get_position_names()
             print("Poses:")
             for position in positions:
                 print("\t" + position)

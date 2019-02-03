@@ -40,8 +40,11 @@ class Annotator(object):
         self._positions[name] = pose
         self.__save_file__()
     
-    def get_positions(self):
+    def get_position_names(self):
         return self._positions.keys()
+
+    def get_position_items(self):
+        return self._positions.items()
 
     def delete_position(self, name):
         if name in self._positions:
@@ -58,3 +61,6 @@ class Annotator(object):
 
             self._client.send_goal(goal)
             self._client.wait_for_result()
+    
+    def exists(self, name):
+        return name in self._positions
