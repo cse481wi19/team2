@@ -45,7 +45,7 @@ class AnnotatorServer(object):
         pose_names.names = self._annotator.get_position_names()
         self._pose_names_pub.publish(pose_names)
 
-    def __update_int_marker__(self, input):
+    def __update_marker_pose__(self, input):
         if (input.event_type == InteractiveMarkerFeedback.MOUSE_UP):
             name = input.marker_name
             new_pose = self._int_marker_server.get(name).pose
@@ -94,7 +94,7 @@ class AnnotatorServer(object):
         int_marker.controls.append(position_control)
 
         self._int_markers[name] = int_marker
-        self._int_marker_server.insert(int_marker, self.__update_int_marker__)
+        self._int_marker_server.insert(int_marker, self.__update_marker_pose__)
         self._int_marker_server.applyChanges()
 
     def create(self, name, pose=None):
