@@ -1,10 +1,17 @@
 <launch>
     <!-- Map annotator server -->
     <!-- You can pass command-line args to your server using the args attribute below. -->
-    <node pkg="applications" type="annotator_server.py" name="map_annotator_server"/>
+    <!-- <node pkg="applications" type="annotator_server.py" name="map_annotator_server"/> -->
 
     <!-- Web prereqs -->
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+
+    <arg name="map_file" default="/home/kiet/catkin_ws/src/cse481wi19/maps/map.yaml" />
+    <include file="$(find fetch_navigation)/launch/fetch_nav.launch">
+      <arg name="map_file" value="$(arg map_file)" />
+    </include>
+    <node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find applications)/config/navigation-lab16.rviz" />
+
     <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" />
     <node pkg="interactive_marker_proxy" type="proxy" name="interactive_marker_proxy_basic_controls">
         <remap from="target_frame" to="/map" />

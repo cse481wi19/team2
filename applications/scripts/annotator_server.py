@@ -29,11 +29,10 @@ class AnnotatorServer(object):
         #                                        InteractiveMarker, queue_size=10, latch=True)
         self._int_marker_server = InteractiveMarkerServer("/map_annotator/map_poses")
 
-        self._int_markers = {}
-
         self.INITIAL_POSE = Pose()
 
-        # Initialize saved markers
+        print("Initializing saved markers: " +
+              str(self._annotator.get_position_names()))
         for name, pose in self._annotator.get_position_items():
             self.__create_int_marker__(name, pose)
         
@@ -43,6 +42,7 @@ class AnnotatorServer(object):
     def __pub_pose_info__(self):
         pose_names = PoseNames()
         pose_names.names = self._annotator.get_position_names()
+        pose_names.names.sort()
         self._pose_names_pub.publish(pose_names)
 
     def __update_marker_pose__(self, input):
@@ -53,18 +53,20 @@ class AnnotatorServer(object):
             self._annotator.save_position(name, new_pose)
 
     def __create_int_marker__(self, name, pose):
-        print("creating marker with pose: " + str(pose))
+        print("creating marker: " + name)
         int_marker = InteractiveMarker()
         int_marker.header.frame_id = "map"
         int_marker.name = name
         int_marker.description = name
         int_marker.pose = pose
+        # Move it 0.25 meters up to make it easier to click
+        int_marker.pose.position.z = 0.25
 
         rotation_ring_control = InteractiveMarkerControl()
         rotation_ring_control.name = "position_control"
         rotation_ring_control.always_visible = True
-        rotation_ring_control.orientation.w = 1
         rotation_ring_control.orientation.x = 0
+        rotation_ring_control.orientation.w = 1
         rotation_ring_control.orientation.y = 1
         rotation_ring_control.orientation.z = 0
         rotation_ring_control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
@@ -73,7 +75,7 @@ class AnnotatorServer(object):
         arrow_marker = Marker()
         arrow_marker.type = Marker.ARROW
         arrow_marker.pose.orientation.w = 1
-        arrow_marker.pose.position.z = 0.25
+        arrow_marker.pose.position.z = 0.15
         arrow_marker.scale.x = 0.6
         arrow_marker.scale.y = 0.15
         arrow_marker.scale.z = 0.15
@@ -93,7 +95,30 @@ class AnnotatorServer(object):
         position_control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
         int_marker.controls.append(position_control)
 
-        self._int_markers[name] = int_marker
+        text_marker = Marker()
+        text_marker.text = name
+        text_marker.type = Marker.TEXT_VIEW_FACING
+        text_marker.pose.orientation.w = 1
+        text_marker.pose.position.z = 1
+        text_marker.scale.x = 0.4
+        text_marker.scale.y = 0.4
+        text_marker.scale.z = 0.4
+        text_marker.color.r = 0.0
+        text_marker.color.g = 0.5
+        text_marker.color.b = 0.5
+        text_marker.color.a = 1.0
+        
+        text_control = InteractiveMarkerControl()
+        text_control.name = "text_control"
+        text_control.markers.append(text_marker)
+        text_control.always_visible = True
+        text_control.orientation.w = 1
+        text_control.orientation.x = 0
+        text_control.orientation.y = 1
+        text_control.orientation.z = 0
+        text_control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
+        int_marker.controls.append(text_control)
+
         self._int_marker_server.insert(int_marker, self.__update_marker_pose__)
         self._int_marker_server.applyChanges()
 
@@ -106,7 +131,6 @@ class AnnotatorServer(object):
     
     def delete(self, name):
         if self._annotator.exists(name):
-            self._int_markers.pop(name)
             self._annotator.delete_position(name)
             self._int_marker_server.erase(name)
             self._int_marker_server.applyChanges()

@@ -406,7 +406,7 @@ Visualization Manager:
       Show Axes: false
       Show Descriptions: true
       Show Visual Aids: false
-      Update Topic: /annotation_marker/update
+      Update Topic: /map_annotator/map_poses/update
       Value: true
     - Alpha: 0.5
       Cell Size: 1
@@ -573,22 +573,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.80303
+      Distance: 2.45465
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -4.34602
-        Y: -5.07993
-        Z: 9.19392
+        X: -5.501
+        Y: 0.46767
+        Z: 10.3556
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.894797
+      Pitch: 1.0498
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.85674
+      Yaw: 3.15674
     Saved: ~
 Window Geometry:
   Displays:
@@ -610,5 +610,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1812
-  X: 156
-  Y: 31
+  X: 243
+  Y: 49
