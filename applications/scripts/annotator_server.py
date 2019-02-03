@@ -24,6 +24,8 @@ class AnnotatorServer(object):
         pose_names.names = self._annotator.get_positions()
         self._pose_names_pub.publish(pose_names)
 
+    def 
+
     def handle_callback(self, user_action_msg):
         cmd = user_action_msg.command
         name = user_action_msg.name
