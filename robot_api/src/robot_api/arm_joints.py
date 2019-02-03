@@ -8,7 +8,9 @@ DEGS_TO_RADS = math.pi / 180
 
 class ArmJoints(object):
     """ArmJoints holds the positions of the Fetch's arm joints.
+
     When setting values, it also enforces joint limits.
+
     js = ArmJoints()
     js.set_shoulder_pan(1.5)
     js.set_shoulder_lift(-0.6)
