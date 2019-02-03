@@ -25,7 +25,11 @@ class AnnotatorServer(object):
         self._annotator = Annotator()
         self._pose_names_pub = rospy.Publisher("/map_annotator/pose_names",
                                                PoseNames, queue_size=10, latch=True)
-        self._int_marker_server = InteractiveMarkerServer("annotation_marker")
+        # self._map_poses_pub = rospy.Publisher("/map_annotator/map_poses",
+        #                                        InteractiveMarker, queue_size=10, latch=True)
+        self._int_marker_server = InteractiveMarkerServer("/map_annotator/map_poses")
+
+        self._int_markers = {}
 
         self.INITIAL_POSE = Pose()
 
@@ -33,10 +37,10 @@ class AnnotatorServer(object):
         for name, pose in self._annotator.get_position_items():
             self.__create_int_marker__(name, pose)
         
-        self.__pub_pose_names__()
+        self.__pub_pose_info__()
         print("Initialization finished...")
 
-    def __pub_pose_names__(self):
+    def __pub_pose_info__(self):
         pose_names = PoseNames()
         pose_names.names = self._annotator.get_position_names()
         self._pose_names_pub.publish(pose_names)
@@ -89,6 +93,7 @@ class AnnotatorServer(object):
         position_control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
         int_marker.controls.append(position_control)
 
+        self._int_markers[name] = int_marker
         self._int_marker_server.insert(int_marker, self.__update_int_marker__)
         self._int_marker_server.applyChanges()
 
@@ -97,14 +102,15 @@ class AnnotatorServer(object):
             pose = self.INITIAL_POSE
         self._annotator.save_position(name, pose)
         self.__create_int_marker__(name, pose)
-        self.__pub_pose_names__()
+        self.__pub_pose_info__()
     
     def delete(self, name):
         if self._annotator.exists(name):
+            self._int_markers.pop(name)
             self._annotator.delete_position(name)
             self._int_marker_server.erase(name)
             self._int_marker_server.applyChanges()
-            self.__pub_pose_names__()
+            self.__pub_pose_info__()
 
     def handle_callback(self, user_action_msg):
         cmd = user_action_msg.command
