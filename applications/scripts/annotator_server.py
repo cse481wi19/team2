@@ -30,6 +30,7 @@ class AnnotatorServer(object):
         self._int_marker_server = InteractiveMarkerServer("/map_annotator/map_poses")
 
         self.INITIAL_POSE = Pose()
+        self.INITIAL_POSE.orientation.w = 1
 
         print("Initializing saved markers: " +
               str(self._annotator.get_position_names()))
@@ -51,6 +52,9 @@ class AnnotatorServer(object):
             new_pose = self._int_marker_server.get(name).pose
             # Overwrite the previous pose with the new pose
             self._annotator.save_position(name, new_pose)
+            self._int_marker_server.setPose(name, new_pose)
+            self._int_marker_server.applyChanges()
+            print("updated pose for: " + name)
 
     def __create_int_marker__(self, name, pose):
         print("creating int marker: " + name)
@@ -114,8 +118,6 @@ class AnnotatorServer(object):
         position_control.orientation.z = 0
         position_control.interaction_mode = InteractiveMarkerControl.MOVE_PLANE
         int_marker.controls.append(position_control)
-
-        
 
         self._int_marker_server.insert(int_marker, self.__update_marker_pose__)
         self._int_marker_server.applyChanges()
