@@ -190,8 +190,9 @@ class Arm(object):
         self._mga_client.send_goal(goal)
         self._mga_client.wait_for_result(rospy.Duration(execution_timeout))
         result = self._mga_client.get_result()
-        # print(type(result))
-        # print(result)
+        if result is None:
+            return 'UNKNOWN_ERROR_CODE'
+            
         msg = moveit_error_string(result.error_code.val)
         if not (msg == "SUCCESS"):
             return msg

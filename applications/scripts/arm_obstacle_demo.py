@@ -36,7 +36,7 @@ def main():
     planning_scene.removeCollisionObject('divider')
     size_x = 0.3 
     size_y = 0.01
-    size_z = 0.4 
+    size_z = 0.2
     x = table_x - (table_size_x / 2) + (size_x / 2)
     y = 0 
     z = table_z + (table_size_z / 2) + (size_z / 2)
@@ -56,6 +56,7 @@ def main():
     pose2.pose.position.z = 0.75
     pose2.pose.orientation.w = 1
 
+    gripper = robot_api.Gripper()
     arm = robot_api.Arm()
     def shutdown():
         arm.cancel_all_goals()
@@ -65,20 +66,38 @@ def main():
         'allowed_planning_time': 15,
         'execution_timeout': 10,
         'num_planning_attempts': 5,
-        'replan': False
+        'replan': True
     }
+
+    planning_scene.removeAttachedObject('tray')
+    gripper.open()
+
     error = arm.move_to_pose(pose1, **kwargs)
     if error is not None:
         rospy.logerr('Pose 1 failed: {}'.format(error))
     else:
         rospy.loginfo('Pose 1 succeeded')
+        rospy.sleep(2)
+        frame_attached_to = 'gripper_link'
+        frames_okay_to_collide_with = [
+            'gripper_link', 'l_gripper_finger_link', 'r_gripper_finger_link'
+        ]
+        planning_scene.attachBox('tray', 0.3, 0.07, 0.01, 0.05, 0, 0,
+                                frame_attached_to, frames_okay_to_collide_with)
+        planning_scene.setColor('tray', 1, 0, 1)
+        planning_scene.sendColors()
+        gripper.close()
+
     rospy.sleep(2)
+
     error = arm.move_to_pose(pose2, **kwargs)
     if error is not None:
         rospy.logerr('Pose 2 failed: {}'.format(error))
     else:
         rospy.loginfo('Pose 2 succeeded')
 
+    gripper.open()
+    planning_scene.removeAttachedObject('tray')
     planning_scene.removeCollisionObject('table')
     planning_scene.removeCollisionObject('divider')
     
