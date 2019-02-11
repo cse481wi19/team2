@@ -150,7 +150,8 @@ class Arm(object):
                     plan_only=False,
                     replan=False,
                     replan_attempts=5,
-                    tolerance=0.01):
+                    tolerance=0.01,
+                    orientation_constraint=None):
         """Moves the end-effector to a pose, using motion planning.
 
         Args:
@@ -185,6 +186,8 @@ class Arm(object):
         goal_builder.replan = replan
         goal_builder.replan_attempts = replan_attempts
         goal_builder.tolerance = tolerance
+        if orientation_constraint is not None:
+            goal_builder.add_path_orientation_constraint(orientation_constraint)
         goal = goal_builder.build()
 
         self._mga_client.send_goal(goal)
@@ -192,7 +195,7 @@ class Arm(object):
         result = self._mga_client.get_result()
         if result is None:
             return 'UNKNOWN_ERROR_CODE'
-            
+
         msg = moveit_error_string(result.error_code.val)
         if not (msg == "SUCCESS"):
             return msg
