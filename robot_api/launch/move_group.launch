@@ -1,6 +1,6 @@
 <launch>
 
-  <include file="$(find fetch_moveit_config)/launch/planning_context.launch" />
+  <include file="$(find robot_api)/launch/planning_context.launch" />
 
   <!-- GDB Debug Option -->
   <arg name="debug" default="false" />
