@@ -3,6 +3,7 @@
 import robot_api
 import rospy
 import copy
+import itertools
 
 from geometry_msgs.msg import Pose, PoseStamped
 from std_msgs.msg import ColorRGBA
@@ -20,10 +21,6 @@ def wait_for_time():
 GRIPPER_MESH = 'package://fetch_description/meshes/gripper_link.dae'
 L_FINGER_MESH = 'package://fetch_description/meshes/l_gripper_finger_link.STL'
 R_FINGER_MESH = 'package://fetch_description/meshes/r_gripper_finger_link.STL'
-
-ID_GOTO = 1
-ID_OPEN = 2
-ID_CLOSE = 3
 
 
 def make_6dof_controls():
@@ -67,6 +64,11 @@ def make_6dof_controls():
     return controls
 
 class GripperTeleop(object):
+
+    ID_GOTO = 1
+    ID_OPEN = 2
+    ID_CLOSE = 3
+
     def __init__(self, arm, gripper, im_server):
         self._arm = arm
         self._gripper = gripper
@@ -141,17 +143,17 @@ class GripperTeleop(object):
         gripper_im.controls.extend(make_6dof_controls())
 
         goto_me = MenuEntry()
-        goto_me.id = ID_GOTO
+        goto_me.id = self.ID_GOTO
         goto_me.title = "Gripper Goto Here"
         goto_me.command_type = MenuEntry.FEEDBACK
 
         open_me = MenuEntry()
-        open_me.id = ID_OPEN
+        open_me.id = self.ID_OPEN
         open_me.title = "Gripper Open"
         open_me.command_type = MenuEntry.FEEDBACK
 
         close_me = MenuEntry()
-        close_me.id = ID_CLOSE
+        close_me.id = self.ID_CLOSE
         close_me.title = "Gripper Close"
         close_me.command_type = MenuEntry.FEEDBACK
 
@@ -205,6 +207,7 @@ class AutoPickTeleop(object):
     ID_PICKFRONT = 1
     ID_OPEN = 2
 
+    STAGE_PREFIXES = ["_s1", "_s2", "_s2"]
     X_OFFSETS = [-0.1, 0.166, 0.166]
     Y_OFFSETS = [0, 0, 0]
     Z_OFFSETS = [0, 0, 0.125]
@@ -217,13 +220,11 @@ class AutoPickTeleop(object):
     def create_gripper_markers(self, pose, prefix="", xoffset=0, yoffset=0, zoffset=0):
         markers = []
 
-        print(pose)
-        pose.position.x += xoffset
-        pose.position.y += yoffset
-        pose.position.z += zoffset
-
         ps = PoseStamped()
         ps.pose = pose
+        ps.pose.position.x += xoffset
+        ps.pose.position.y += yoffset
+        ps.pose.position.z += zoffset
         ps.header.frame_id = "base_link"
         
         color = ColorRGBA()
@@ -238,6 +239,9 @@ class AutoPickTeleop(object):
             color.b = 0.25
             color.a = 1
 
+
+        wrist_link_xoff = 0.166
+
         gripper_marker = Marker()
         gripper_marker.text = "gripper_link" + prefix
         gripper_marker.type = Marker.MESH_RESOURCE
@@ -246,7 +250,7 @@ class AutoPickTeleop(object):
         gripper_marker.scale.y = 1
         gripper_marker.scale.z = 1
         gripper_marker.color = color
-        gripper_marker.pose.position.x = xoffset
+        gripper_marker.pose.position.x = xoffset + wrist_link_xoff
         gripper_marker.pose.position.y = yoffset
         gripper_marker.pose.position.z = zoffset
 
@@ -258,7 +262,7 @@ class AutoPickTeleop(object):
         r_gripper_marker.scale.y = 1
         r_gripper_marker.scale.z = 1
         r_gripper_marker.color = color
-        r_gripper_marker.pose.position.x = xoffset
+        r_gripper_marker.pose.position.x = xoffset + wrist_link_xoff
         r_gripper_marker.pose.position.y = 0.05 + yoffset
         r_gripper_marker.pose.position.z = zoffset
 
@@ -270,7 +274,7 @@ class AutoPickTeleop(object):
         l_gripper_marker.scale.y = 1
         l_gripper_marker.scale.z = 1
         l_gripper_marker.color = color
-        l_gripper_marker.pose.position.x = xoffset
+        l_gripper_marker.pose.position.x = xoffset + wrist_link_xoff
         l_gripper_marker.pose.position.y = -0.05 + yoffset
         l_gripper_marker.pose.position.z = zoffset
 
@@ -289,24 +293,14 @@ class AutoPickTeleop(object):
         gripper_im.description = "gripper_int"
         gripper_im.pose = pose
 
-        # GRIPPER STAGE 1 (PRE)
-        stage1_markers = self.create_gripper_markers(copy.deepcopy(pose), prefix="_s1", xoffset=-0.1)
-
-        # GRIPPER STAGE 2 (GRASP)
-        stage2_markers = self.create_gripper_markers(
-            copy.deepcopy(pose), prefix="_s2", xoffset=0.166)
-
-        # GRIPPER STAGE 3 (LIFT)
-        stage3_markers = self.create_gripper_markers(
-            copy.deepcopy(pose), prefix="_s3", xoffset=0.166, zoffset=0.125)
-
         gripper_control = InteractiveMarkerControl()
         gripper_control.name = "gripper_link_control"
-        gripper_control.markers.extend(stage1_markers)
-        gripper_control.markers.extend(stage2_markers)
-        gripper_control.markers.extend(stage3_markers)
         gripper_control.always_visible = True
         gripper_control.interaction_mode = InteractiveMarkerControl.NONE
+
+        for xoff, yoff, zoff, pref in itertools.izip(self.X_OFFSETS, self.Y_OFFSETS, self.Z_OFFSETS, self.STAGE_PREFIXES):
+            gripper_control.markers.extend(
+                self.create_gripper_markers(copy.deepcopy(pose), prefix=pref, xoffset=xoff, yoffset=yoff, zoffset=zoff))
 
         gripper_im.controls.append(gripper_control)
         gripper_im.controls.extend(make_6dof_controls())
@@ -341,13 +335,19 @@ class AutoPickTeleop(object):
         if feedback.event_type == InteractiveMarkerFeedback.MENU_SELECT:
             print(feedback)
             if feedback.menu_entry_id == self.ID_PICKFRONT:
-                self._gripper.open()
-
-                print("GOTO PRESSED")
+                print("START SEQUENCE")
                 ps = PoseStamped()
-                ps.pose = feedback.pose
-                ps.header.frame_id = "base_link"
-                self._arm.move_to_pose(ps)
+                self._gripper.open()
+                for i, tup in enumerate(itertools.izip(self.X_OFFSETS, self.Y_OFFSETS, self.Z_OFFSETS)):
+                    xoff, yoff, zoff = tup
+                    ps.pose = copy.deepcopy(feedback.pose)
+                    ps.pose.position.x += xoff
+                    ps.pose.position.y += yoff
+                    ps.pose.position.z += zoff
+                    ps.header.frame_id = "base_link"
+                    self._arm.move_to_pose(ps)
+                    if i == 1:
+                        self._gripper.close()
             elif feedback.menu_entry_id == self.ID_OPEN:
                 print("OPEN PRESSED")
                 self._gripper.open()
