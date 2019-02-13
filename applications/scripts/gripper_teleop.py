@@ -228,7 +228,7 @@ class AutoPickTeleop(object):
         ps.header.frame_id = "base_link"
         
         color = ColorRGBA()
-        if self._arm.compute_ik(ps):
+        if self._arm.compute_ik(ps, verbose=False):
             color.r = 0.5
             color.g = 1
             color.b = 0.5
@@ -291,20 +291,8 @@ class AutoPickTeleop(object):
         gripper_im.header.frame_id = "base_link"
         gripper_im.name = "gripper_int"
         gripper_im.description = "gripper_int"
-        gripper_im.pose = pose
 
-        gripper_control = InteractiveMarkerControl()
-        gripper_control.name = "gripper_link_control"
-        gripper_control.always_visible = True
-        gripper_control.interaction_mode = InteractiveMarkerControl.NONE
-
-        for xoff, yoff, zoff, pref in itertools.izip(self.X_OFFSETS, self.Y_OFFSETS, self.Z_OFFSETS, self.STAGE_PREFIXES):
-            gripper_control.markers.extend(
-                self.create_gripper_markers(copy.deepcopy(pose), prefix=pref, xoffset=xoff, yoffset=yoff, zoffset=zoff))
-
-        gripper_im.controls.append(gripper_control)
-        gripper_im.controls.extend(make_6dof_controls())
-
+        # Setup context menu options
         pickfront_me = MenuEntry()
         pickfront_me.id = self.ID_PICKFRONT
         pickfront_me.title = "Pick from front"
@@ -318,8 +306,24 @@ class AutoPickTeleop(object):
         gripper_im.menu_entries.append(pickfront_me)
         gripper_im.menu_entries.append(open_me)
 
-        self._im_server.insert(gripper_im, feedback_cb=self.handle_feedback)
+        gripper_im.pose = pose
+        gripper_im.controls.extend(make_6dof_controls())
+
+        gripper_control = InteractiveMarkerControl()
+        gripper_control.name = "gripper_link_control"
+        gripper_control.always_visible = True
+        gripper_control.interaction_mode = InteractiveMarkerControl.NONE
+        
+        for xoff, yoff, zoff, pref in itertools.izip(self.X_OFFSETS, self.Y_OFFSETS, self.Z_OFFSETS, self.STAGE_PREFIXES):
+            gripper_control.markers.extend(
+                self.create_gripper_markers(copy.deepcopy(pose), prefix=pref, xoffset=xoff, yoffset=yoff, zoffset=zoff))
+
+        gripper_im.controls.append(gripper_control)
+
+        self._im_server.insert(
+            gripper_im, feedback_cb=self.handle_feedback)
         self._im_server.applyChanges()
+
 
     def start(self):
         ps = PoseStamped()
@@ -352,9 +356,8 @@ class AutoPickTeleop(object):
                 print("OPEN PRESSED")
                 self._gripper.open()
         elif feedback.event_type == InteractiveMarkerFeedback.POSE_UPDATE:
-            self.update_marker(pose=feedback.pose)
-        else:
             print(feedback)
+            self.update_marker(pose=feedback.pose)
 
 
 def main():

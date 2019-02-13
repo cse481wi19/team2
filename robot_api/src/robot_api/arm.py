@@ -5,6 +5,7 @@ import sys
 import copy
 import rospy
 import actionlib
+import itertools
 import moveit_commander
 import moveit_msgs.msg
 import geometry_msgs.msg
@@ -214,7 +215,7 @@ class Arm(object):
             tolerance=tolerance,
             plan_only=True)
     
-    def compute_ik(self, pose_stamped, timeout=rospy.Duration(5)):
+    def compute_ik(self, pose_stamped, timeout=rospy.Duration(5), verbose=True):
         """Computes inverse kinematics for the given pose.
 
         Note: if you are interested in returning the IK solutions, we have
@@ -236,10 +237,11 @@ class Arm(object):
         success = error_str == 'SUCCESS'
         if not success:
             return False
-        joint_state = response.solution.joint_state
-        for name, position in zip(joint_state.name, joint_state.position):
-            if name in ArmJoints.names():
-                rospy.loginfo('{}: {}'.format(name, position))
+        if verbose:
+            joint_state = response.solution.joint_state
+            for name, position in itertools.izip(joint_state.name, joint_state.position):
+                if name in ArmJoints.names():
+                    rospy.loginfo('{}: {}'.format(name, position))
         return True
 
 
