@@ -31,6 +31,7 @@ def main():
         try:
             (trans, rot) = listener.lookupTransform(
                 "base_link", "gripper_link", rospy.Time(0))
+            # Rounding numbers
             for i, t in enumerate(trans):
                 trans[i] = round(t, 5)
             for i, r in enumerate(rot):
