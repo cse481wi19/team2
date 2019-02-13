@@ -202,6 +202,13 @@ class GripperTeleop(object):
 
 
 class AutoPickTeleop(object):
+    ID_PICKFRONT = 1
+    ID_OPEN = 2
+
+    X_OFFSETS = [-0.1, 0.166, 0.166]
+    Y_OFFSETS = [0, 0, 0]
+    Z_OFFSETS = [0, 0, 0.125]
+
     def __init__(self, arm, gripper, im_server):
         self._arm = arm
         self._gripper = gripper
@@ -304,24 +311,18 @@ class AutoPickTeleop(object):
         gripper_im.controls.append(gripper_control)
         gripper_im.controls.extend(make_6dof_controls())
 
-        goto_me = MenuEntry()
-        goto_me.id = ID_GOTO
-        goto_me.title = "Gripper Goto Here"
-        goto_me.command_type = MenuEntry.FEEDBACK
+        pickfront_me = MenuEntry()
+        pickfront_me.id = self.ID_PICKFRONT
+        pickfront_me.title = "Pick from front"
+        pickfront_me.command_type = MenuEntry.FEEDBACK
 
         open_me = MenuEntry()
-        open_me.id = ID_OPEN
-        open_me.title = "Gripper Open"
+        open_me.id = self.ID_OPEN
+        open_me.title = "Gripper open"
         open_me.command_type = MenuEntry.FEEDBACK
 
-        close_me = MenuEntry()
-        close_me.id = ID_CLOSE
-        close_me.title = "Gripper Close"
-        close_me.command_type = MenuEntry.FEEDBACK
-
-        gripper_im.menu_entries.append(goto_me)
+        gripper_im.menu_entries.append(pickfront_me)
         gripper_im.menu_entries.append(open_me)
-        gripper_im.menu_entries.append(close_me)
 
         self._im_server.insert(gripper_im, feedback_cb=self.handle_feedback)
         self._im_server.applyChanges()
@@ -339,18 +340,17 @@ class AutoPickTeleop(object):
     def handle_feedback(self, feedback):
         if feedback.event_type == InteractiveMarkerFeedback.MENU_SELECT:
             print(feedback)
-            # if feedback.menu_entry_id == ID_GOTO:
-            #     print("GOTO PRESSED")
-            #     ps = PoseStamped()
-            #     ps.pose = feedback.pose
-            #     ps.header.frame_id = "base_link"
-            #     self._arm.move_to_pose(ps)
-            # elif feedback.menu_entry_id == ID_OPEN:
-            #     print("OPEN PRESSED")
-            #     self._gripper.open()
-            # elif feedback.menu_entry_id == ID_CLOSE:
-            #     print("CLOSE PRESSED")
-            #     self._gripper.close()
+            if feedback.menu_entry_id == self.ID_PICKFRONT:
+                self._gripper.open()
+
+                print("GOTO PRESSED")
+                ps = PoseStamped()
+                ps.pose = feedback.pose
+                ps.header.frame_id = "base_link"
+                self._arm.move_to_pose(ps)
+            elif feedback.menu_entry_id == self.ID_OPEN:
+                print("OPEN PRESSED")
+                self._gripper.open()
         elif feedback.event_type == InteractiveMarkerFeedback.POSE_UPDATE:
             self.update_marker(pose=feedback.pose)
         else:
