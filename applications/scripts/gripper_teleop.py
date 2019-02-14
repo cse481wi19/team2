@@ -177,23 +177,23 @@ class GripperTeleop(object):
     def handle_feedback(self, feedback):
         if feedback.event_type == InteractiveMarkerFeedback.MENU_SELECT:
             print(feedback)
-            if feedback.menu_entry_id == ID_GOTO:
+            if feedback.menu_entry_id == self.ID_GOTO:
                 print("GOTO PRESSED")
                 ps = PoseStamped()
                 ps.pose = feedback.pose
                 ps.header.frame_id = "base_link"
                 self._arm.move_to_pose(ps)
-            elif feedback.menu_entry_id == ID_OPEN:
+            elif feedback.menu_entry_id == self.ID_OPEN:
                 print("OPEN PRESSED")
                 self._gripper.open()
-            elif feedback.menu_entry_id == ID_CLOSE:
+            elif feedback.menu_entry_id == self.ID_CLOSE:
                 print("CLOSE PRESSED")
                 self._gripper.close()
         elif feedback.event_type == InteractiveMarkerFeedback.POSE_UPDATE:
             ps = PoseStamped()
             ps.pose = feedback.pose
             ps.header.frame_id = "base_link"
-            if self._arm.compute_ik(ps):
+            if self._arm.compute_ik(ps, verbose=False):
                 # Found IK
                 self.update_marker(True, pose=feedback.pose)
             else:
@@ -232,12 +232,12 @@ class AutoPickTeleop(object):
             color.r = 0.5
             color.g = 1
             color.b = 0.5
-            color.a = 1
+            color.a = 0.75
         else:
             color.r = 1
             color.g = 0.25
             color.b = 0.25
-            color.a = 1
+            color.a = 0.75
 
 
         wrist_link_xoff = 0.166
@@ -282,6 +282,38 @@ class AutoPickTeleop(object):
         markers.append(r_gripper_marker)
         markers.append(l_gripper_marker)
         return markers
+    
+    def create_box_marker(self, pose, prefix="", xoffset=0, yoffset=0, zoffset=0):
+        ps = PoseStamped()
+        ps.pose = pose
+        ps.pose.position.x += xoffset
+        ps.pose.position.y += yoffset
+        ps.pose.position.z += zoffset
+        ps.header.frame_id = "base_link"
+        
+        color = ColorRGBA()
+        color.r = 0.5
+        color.g = 1
+        color.b = 0.5
+        color.a = 1
+
+        wrist_link_xoff = 0.166
+
+        box_scale = 0.05
+        box_xoff = 0.015
+
+        box_marker = Marker()
+        box_marker.text = "box_link"
+        box_marker.type = Marker.CUBE
+        box_marker.scale.x = box_scale
+        box_marker.scale.y = box_scale
+        box_marker.scale.z = box_scale
+        box_marker.color = color
+        box_marker.pose.position.x = xoffset + wrist_link_xoff + box_xoff
+        box_marker.pose.position.y = yoffset
+        box_marker.pose.position.z = zoffset
+
+        return box_marker
 
     def update_marker(self, pose=None):
         if pose is None:
@@ -317,6 +349,8 @@ class AutoPickTeleop(object):
         for xoff, yoff, zoff, pref in itertools.izip(self.X_OFFSETS, self.Y_OFFSETS, self.Z_OFFSETS, self.STAGE_PREFIXES):
             gripper_control.markers.extend(
                 self.create_gripper_markers(copy.deepcopy(pose), prefix=pref, xoffset=xoff, yoffset=yoff, zoffset=zoff))
+
+        gripper_control.markers.append(self.create_box_marker(copy.deepcopy(pose), xoffset=0.166, yoffset=0, zoffset=0))
 
         gripper_im.controls.append(gripper_control)
 
@@ -369,11 +403,11 @@ def main():
     arm = robot_api.Arm()
     gripper = robot_api.Gripper()
 
-    # im_server = InteractiveMarkerServer('gripper_im_server') 
-    # teleop = GripperTeleop(arm, gripper, im_server)
-    # teleop.start()
+    im_server = InteractiveMarkerServer('gripper_im_server', q_size=2) 
+    teleop = GripperTeleop(arm, gripper, im_server)
+    teleop.start()
 
-    auto_pick_im_server = InteractiveMarkerServer('auto_pick_im_server')
+    auto_pick_im_server = InteractiveMarkerServer('auto_pick_im_server', q_size=2)
     auto_pick = AutoPickTeleop(arm, gripper, auto_pick_im_server)
     auto_pick.start()
 
