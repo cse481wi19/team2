@@ -27,7 +27,7 @@ def main():
     planning_scene.removeCollisionObject('floor')
     planning_scene.addBox('floor', 2, 2, 0.01, 0, 0, 0.01/2)
     planning_scene.addBox('table', 0.5, 1, 0.82, 1, 0, 0.72/2)
-    planning_scene.addBox('robot_base', 0.54, 0.52, 0.37, 0, 0, 0)
+    planning_scene.addBox('robot_base', 0.54, 0.52, 0.37, 0, 0, 0.37/2)
 
     rospy.sleep(2)
     rospy.spin()
