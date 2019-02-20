@@ -19,6 +19,7 @@ class ArTagReader(object):
 
     def callback(self, msg):
         self.markers = msg.markers
+        self.markers.sort(key=lambda x : x.id)
 
 
 def main():
@@ -51,7 +52,7 @@ def main():
         error = arm.move_to_pose(marker.pose)
         if error is None:
             rospy.loginfo('Moved to marker {}'.format(marker.id))
-            return
+            # return
         else:
             rospy.logwarn('Failed to move to marker {}'.format(marker.id))
     rospy.logerr('Failed to move to any markers!')
