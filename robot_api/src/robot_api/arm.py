@@ -147,6 +147,7 @@ class Arm(object):
                     allowed_planning_time=10.0,
                     execution_timeout=15.0,
                     group_name='arm',
+                    gripper_frame='wrist_roll_link',
                     num_planning_attempts=1,
                     plan_only=False,
                     replan=False,
@@ -183,6 +184,7 @@ class Arm(object):
         goal_builder.set_pose_goal(pose_stamped)
         goal_builder.allowed_planning_time = allowed_planning_time
         goal_builder.num_planning_attempts = num_planning_attempts
+        goal_builder.gripper_frame = gripper_frame
         goal_builder.plan_only = plan_only
         goal_builder.replan = replan
         goal_builder.replan_attempts = replan_attempts

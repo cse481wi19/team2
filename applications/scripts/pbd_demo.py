@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import actionlib
 import pickle
 import rospy
 import robot_api
@@ -10,6 +11,7 @@ import tf.transformations as tft
 
 from geometry_msgs.msg import PoseStamped
 from ar_track_alvar_msgs.msg import AlvarMarkers
+from robot_controllers_msgs.msg import QueryControllerStatesAction, QueryControllerStatesGoal, ControllerState
 
 def wait_for_time():                                              
     """Wait for simulated time to begin.                          
@@ -27,6 +29,8 @@ def print_commands():
     print("save-program <file_path>: saves the program to the given file path.")
     print("load-program <file_path>: loads the program from the given file path.")
     print("print-program: print the current program sequence")
+    print("arm-relax: relax the arm")
+    print("arm-unrelax: unrelaxes the arm")
     print("tags: print the available tag frames")
     print("stop: stops the demo")
     print("help: Show this list of commands")
@@ -65,7 +69,10 @@ class Program(object):
 
     def print_program(self):
         for i, command in enumerate(self.commands):
-            print(i, Command.NUM_TO_CMD[command.type])
+            if command.type == Command.POSE:
+                print(i, Command.NUM_TO_CMD[command.type], command.pose_stamped.header.frame_id)
+            else:   
+                print(i, Command.NUM_TO_CMD[command.type])
 
     def run(self):
         arm = robot_api.Arm()
@@ -135,8 +142,11 @@ def main():
     reader = ArTagReader()
     sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, callback=reader.callback)
 
+    controller_client = actionlib.SimpleActionClient('query_controller_states', QueryControllerStatesAction)
+
     print_intro()
-    program = None
+    program = Program()
+    print("Program created.")
     running = True
     while running:
         user_input = raw_input(">>>")
@@ -147,10 +157,11 @@ def main():
         cmd = args[0]
         if cmd == "create":
             program = Program()
+            print("Program created.")
         elif cmd == "save-pose":
             if len(args) == 2:
                 frame = args[1]
-                (pos, rot) = listener.lookupTransform(frame, "gripper_link", rospy.Time(0))
+                (pos, rot) = listener.lookupTransform(frame, "wrist_roll_link", rospy.Time(0))
                 print(str(pos), str(rot))
 
                 # Maybe we need some kind of offset?
@@ -197,6 +208,24 @@ def main():
                 print("No frame given.")
         elif cmd == "print-program":
             program.print_program()
+        elif cmd == "arm-relax":
+            goal = QueryControllerStatesGoal()
+            state = ControllerState()
+            state.name = 'arm_controller/follow_joint_trajectory'
+            state.state = ControllerState.STOPPED
+            goal.updates.append(state)
+            controller_client.send_goal(goal)
+            controller_client.wait_for_result()
+            print("Arm is now relaxed.")
+        elif cmd == "arm-unrelax":
+            goal = QueryControllerStatesGoal()
+            state = ControllerState()
+            state.name = 'arm_controller/follow_joint_trajectory'
+            state.state = ControllerState.RUNNING
+            goal.updates.append(state)
+            controller_client.send_goal(goal)
+            controller_client.wait_for_result()
+            print("Arm is now unrelaxed.")
         elif cmd == "tags":
             for frame in reader.get_available_tag_frames():
                 print("\t" + frame)
