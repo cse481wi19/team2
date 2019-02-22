@@ -74,6 +74,7 @@ class Program(object):
             else:   
                 print(i, Command.NUM_TO_CMD[command.type])
 
+
     def run(self):
         arm = robot_api.Arm()
         gripper = robot_api.Gripper()
@@ -85,7 +86,15 @@ class Program(object):
                 ps = command.pose_stamped
                 curr_frame = command.pose_stamped.header.frame_id
                 if curr_frame != "base_link":
-                    (pos, rot) = listener.lookupTransform("base_link", curr_frame, rospy.Time(0))
+                    listener.waitForTransform("base_link", curr_frame, rospy.Time(), rospy.Duration(4.0))
+                    while not rospy.is_shutdown():
+                        try:
+                            now = rospy.Time.now()
+                            listener.waitForTransform("base_link", curr_frame, now, rospy.Duration(4.0))
+                            (pos, rot) = listener.lookupTransform("base_link", curr_frame, now)
+                            break
+                        except:
+                            pass
                     base_T_frame_matrix = tft.quaternion_matrix(rot)
                     base_T_frame_matrix[0, 3] = pos[0]
                     base_T_frame_matrix[1, 3] = pos[1]
@@ -115,6 +124,7 @@ class Program(object):
                 gripper.close()
             else:
                 print("UNKNOWN COMMAND " + str(command.type))
+            rospy.sleep(1)
     
 
 class ArTagReader(object):
@@ -130,7 +140,14 @@ class ArTagReader(object):
             tag_frames.append("ar_marker_" + str(marker.id))
         return tag_frames
 
-
+def create_transform_matrix(transform):
+    # transform is tuple (pos, rot)
+    (pos, rot) = transform
+    matrix = tft.quaternion_matrix(rot)
+    matrix[0, 3] = pos[0]
+    matrix[1, 3] = pos[1]
+    matrix[2, 3] = pos[2]
+    return matrix
 
 def main():
     rospy.init_node("annotator_node")
@@ -161,22 +178,40 @@ def main():
         elif cmd == "save-pose":
             if len(args) == 2:
                 frame = args[1]
-                (pos, rot) = listener.lookupTransform(frame, "wrist_roll_link", rospy.Time(0))
-                print(str(pos), str(rot))
+                if frame == "base_link":
+                    (pos, rot) = listener.lookupTransform(frame, "wrist_roll_link", rospy.Time(0))
+                    print(str(pos), str(rot))
 
-                # Maybe we need some kind of offset?
-                wrist_link_xoff = 0.166
+                    ps = PoseStamped()
+                    ps.header.frame_id = frame
+                    ps.pose.position.x = pos[0]
+                    ps.pose.position.y = pos[1]
+                    ps.pose.position.z = pos[2]
 
-                ps = PoseStamped()
-                ps.header.frame_id = frame
-                ps.pose.position.x = pos[0]
-                ps.pose.position.y = pos[1]
-                ps.pose.position.z = pos[2]
+                    ps.pose.orientation.x = rot[0]
+                    ps.pose.orientation.y = rot[1]
+                    ps.pose.orientation.z = rot[2]
+                    ps.pose.orientation.w = rot[3]
+                else:
+                    transform = listener.lookupTransform(frame, "base_link", rospy.Time(0))
+                    tag_T_base = create_transform_matrix(transform)
 
-                ps.pose.orientation.x = rot[0]
-                ps.pose.orientation.y = rot[1]
-                ps.pose.orientation.z = rot[2]
-                ps.pose.orientation.w = rot[3]
+                    user_input = raw_input("saved base relative to the frame, move the arm and press enter when done")
+                    transform = listener.lookupTransform("base_link", "wrist_roll_link", rospy.Time(0))
+                    base_T_gripper = create_transform_matrix(transform)
+                    
+                    ans = np.dot(tag_T_base, base_T_gripper)
+                    ans2 = tft.quaternion_from_matrix(ans)
+                    
+                    ps = PoseStamped()
+                    ps.pose.position.x = ans[0, 3]
+                    ps.pose.position.y = ans[1, 3]
+                    ps.pose.position.z = ans[2, 3]
+                    ps.pose.orientation.x = ans2[0]
+                    ps.pose.orientation.y = ans2[1]
+                    ps.pose.orientation.z = ans2[2]
+                    ps.pose.orientation.w = ans2[3]
+                    ps.header.frame_id = frame
                 program.add_pose_command(ps)
             else:
                 print("No frame given.")
@@ -233,6 +268,8 @@ def main():
             print_commands()
         elif cmd == "stop":
             running = False
+        else:
+            print("NO SUCH COMMAND: " + cmd)
         print("")
 
 if __name__ == '__main__':
