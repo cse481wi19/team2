@@ -46,12 +46,26 @@ void SegmentSurface(PointCloudC::Ptr cloud, pcl::PointIndices::Ptr indices) {
   }
 }
 
-Segmenter::Segmenter(const ros::Publisher& surface_points_pub)
-    : surface_points_pub_(surface_points_pub) {}
+// Computes the axis-aligned bounding box of a point cloud.
+//
+// Args:
+//  cloud: The point cloud
+//  pose: The output pose. Because this is axis-aligned, the orientation is just
+//    the identity. The position refers to the center of the box.
+//  dimensions: The output dimensions, in meters.
+void GetAxisAlignedBoundingBox(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
+                               geometry_msgs::Pose* pose,
+                               geometry_msgs::Vector3* dimensions) {
+  
+}
+
+Segmenter::Segmenter(const ros::Publisher& surface_points_pub, const ros::Publisher& marker_pub)
+    : surface_points_pub_(surface_points_pub), marker_pub_(marker_pub) {}
 
 void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
   PointCloudC::Ptr cloud(new PointCloudC());
   pcl::fromROSMsg(msg, *cloud);
+  ROS_INFO("Got point cloud with %ld points", cloud->size());
 
   pcl::PointIndices::Ptr table_inliers(new pcl::PointIndices());
   SegmentSurface(cloud, table_inliers);
@@ -62,6 +76,8 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
   extract.setInputCloud(cloud);
   extract.setIndices(table_inliers);
   extract.filter(*subset_cloud);
+
+  ROS_INFO("Cropped to %ld points", subset_cloud->size());
 
   sensor_msgs::PointCloud2 msg_out;
   pcl::toROSMsg(*subset_cloud, msg_out);
