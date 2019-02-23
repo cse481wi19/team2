@@ -15,9 +15,9 @@ void Downsampler::Callback(const sensor_msgs::PointCloud2 &msg)
     PointCloudC::Ptr downsampled_cloud(new PointCloudC());
     pcl::fromROSMsg(msg, *downsampled_cloud);
     pcl::VoxelGrid<PointC> vox;
-    vox.setInputCloud(downsampled_cloud);
     double voxel_size;
     ros::param::param("voxel_size", voxel_size, 0.01);
+    vox.setInputCloud(downsampled_cloud);
     vox.setLeafSize(voxel_size, voxel_size, voxel_size);
     vox.filter(*downsampled_cloud);
     ROS_INFO("Downsampled to %ld points", downsampled_cloud->size());
