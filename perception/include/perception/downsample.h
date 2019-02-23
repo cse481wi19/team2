@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
+#include "pcl/common/common.h"
 
 namespace perception
 {
