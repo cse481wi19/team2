@@ -21,12 +21,12 @@ void Downsampler::Callback(const sensor_msgs::PointCloud2 &msg)
     vox.setInputCloud(downsampled_cloud);
     vox.setLeafSize(voxel_size, voxel_size, voxel_size);
     vox.filter(*downsampled_cloud);
-    ROS_INFO("Downsampled to %ld points", downsampled_cloud->size());
+    // ROS_INFO("Downsampled to %ld points", downsampled_cloud->size());
 
     PointC min_pcl;
     PointC max_pcl;
     pcl::getMinMax3D<PointC>(*downsampled_cloud, min_pcl, max_pcl);
-    ROS_INFO("min: %f, max: %f", min_pcl.x, max_pcl.x);
+    // ROS_INFO("min: %f, max: %f", min_pcl.x, max_pcl.x);
 
     sensor_msgs::PointCloud2 msg_out;
     pcl::toROSMsg(*downsampled_cloud, msg_out);

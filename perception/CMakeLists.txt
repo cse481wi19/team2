@@ -110,6 +110,7 @@ catkin_package(
   LIBRARIES 
       perception_crop
       perception_downsample
+      perception_segmentation
 #  CATKIN_DEPENDS roscpp rospy
 #  DEPENDS system_lib
 )
@@ -136,6 +137,11 @@ add_dependencies(perception_downsample ${${PROJECT_NAME}_EXPORTED_TARGETS} ${cat
 target_link_libraries(perception_downsample ${catkin_LIBRARIES})
 
 # crop.cpp
+add_library(perception_segmentation src/segmentation.cpp)
+add_dependencies(perception_segmentation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(perception_segmentation ${catkin_LIBRARIES})
+
+# crop.cpp
 add_library(perception_crop src/crop.cpp)
 add_dependencies(perception_crop ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(perception_crop ${catkin_LIBRARIES})
@@ -157,6 +163,7 @@ add_dependencies(perception_point_cloud_demo ${${PROJECT_NAME}_EXPORTED_TARGETS}
 target_link_libraries(perception_point_cloud_demo
   perception_crop
   perception_downsample
+  perception_segmentation
   ${catkin_LIBRARIES}
 )
 

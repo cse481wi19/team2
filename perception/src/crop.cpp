@@ -32,7 +32,7 @@ void Cropper::Callback(const sensor_msgs::PointCloud2 &msg)
     crop.setMin(min_pt);
     crop.setMax(max_pt);
     crop.filter(*cropped_cloud);
-    ROS_INFO("Cropped to %ld points", cropped_cloud->size());
+    // ROS_INFO("Cropped to %ld points", cropped_cloud->size());
 
     sensor_msgs::PointCloud2 msg_out;
     pcl::toROSMsg(*cropped_cloud, msg_out);

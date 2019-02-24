@@ -1,7 +1,9 @@
 #include "perception/crop.h"
 #include "perception/downsample.h"
+#include "perception/segmentation.h"
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
+#include "visualization_msgs/Marker.h"
 
 int main(int argc, char **argv)
 {
@@ -17,6 +19,17 @@ int main(int argc, char **argv)
     perception::Downsampler downsampler(downsample_pub);
     ros::Subscriber downsample_sub =
         nh.subscribe("cropped_cloud", 1, &perception::Downsampler::Callback, &downsampler);
+
+    ros::Publisher table_pub =
+        nh.advertise<sensor_msgs::PointCloud2>("table_cloud", 1, true);
+    ros::Publisher marker_pub =
+        nh.advertise<visualization_msgs::Marker>("visualization_marker", 1, true);
+    ros::Publisher object_pub =
+        nh.advertise<sensor_msgs::PointCloud2>("object_cloud", 1, true);
+    perception::Segmenter segmenter(table_pub, marker_pub, object_pub);
+
+    ros::Subscriber table_sub =
+        nh.subscribe("cropped_cloud", 1, &perception::Segmenter::Callback, &segmenter);
     ros::spin();
     return 0;
 }
