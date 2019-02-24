@@ -29,7 +29,7 @@ void SegmentSurface(PointCloudC::Ptr cloud, pcl::PointIndices::Ptr indices) {
   seg.setMethodType(pcl::SAC_RANSAC);
   // Set the distance to the plane for a point to be an inlier.
   // seg.setDistanceThreshold(0.0025);
-  seg.setDistanceThreshold(0.01);
+  seg.setDistanceThreshold(0.0079);
   seg.setInputCloud(cloud);
 
   // Make sure that the plane is perpendicular to Z-axis, 10 degree tolerance.
@@ -104,8 +104,8 @@ void SegmentSurfaceObjects(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
   double cluster_tolerance;
   int min_cluster_size, max_cluster_size;
   ros::param::param("ec_cluster_tolerance", cluster_tolerance, 0.01);
-  ros::param::param("ec_min_cluster_size", min_cluster_size, 10);
-  ros::param::param("ec_max_cluster_size", max_cluster_size, 10000);
+  ros::param::param("ec_min_cluster_size", min_cluster_size, 150);
+  ros::param::param("ec_max_cluster_size", max_cluster_size, 20000);
 
   pcl::EuclideanClusterExtraction<PointC> euclid;
   euclid.setInputCloud(cloud);
@@ -179,6 +179,31 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
 
   std::vector<pcl::PointIndices> object_indices;
   SegmentSurfaceObjects(cropped_cloud, table_inliers, &object_indices);
+
+  // Draw boxes for objects
+  for (size_t i = 0; i < object_indices.size(); ++i) {
+    // Reify indices into a point cloud of the object.
+    pcl::PointIndices::Ptr indices(new pcl::PointIndices);
+    *indices = object_indices[i];
+
+    PointCloudC::Ptr object_cloud(new PointCloudC());
+    pcl::ExtractIndices<PointC> extract2;
+    extract2.setInputCloud(cropped_cloud);
+    extract2.setIndices(indices);
+    extract2.filter(*object_cloud);
+
+    // Publish a bounding box around it.
+    visualization_msgs::Marker object_marker;
+    object_marker.ns = "objects";
+    object_marker.id = i;
+    object_marker.header.frame_id = "base_link";
+    object_marker.type = visualization_msgs::Marker::CUBE;
+    GetAxisAlignedBoundingBox(object_cloud, &object_marker.pose,
+                              &object_marker.scale);
+    object_marker.color.g = 1;
+    object_marker.color.a = 0.3;
+    marker_pub_.publish(object_marker);
+  }
 
   PointCloudC::Ptr object_cloud(new PointCloudC());
   pcl::ExtractIndices<PointC> extract2;

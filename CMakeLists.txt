@@ -10,6 +10,7 @@ include_directories(madmux)
 include_directories(madmux/include)
 include_directories(perception/include)
 include_directories(perception/include/perception)
+include_directories(/opt/ros/indigo/include)
 
 add_executable(cse481wi19
         fetch_ikfast_plugin/include/ikfast.h
