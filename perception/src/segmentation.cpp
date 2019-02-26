@@ -18,10 +18,11 @@
 typedef pcl::PointXYZRGB PointC;
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudC;
 
-
 namespace perception
 {
-void SegmentSurface(PointCloudC::Ptr cloud, pcl::PointIndices::Ptr indices)
+const std::string FRAME = "base_link";
+// const std::string FRAME = "head_camera_rgb_optical_frame";
+void SegmentSurface(PointCloudC::Ptr cloud, pcl::PointIndices::Ptr indices) 
 {
     pcl::PointIndices indices_internal;
     pcl::SACSegmentation<PointC> seg;
@@ -33,9 +34,16 @@ void SegmentSurface(PointCloudC::Ptr cloud, pcl::PointIndices::Ptr indices)
     seg.setDistanceThreshold(0.01);
     seg.setInputCloud(cloud);
 
-    // Make sure that the plane is perpendicular to Z-axis, 10 degree tolerance.
+    // Make sure that the plane is perpendicular to Y-axis, 10 degree tolerance.
     Eigen::Vector3f axis;
-    axis << 0, 0, 1;
+
+    if (FRAME == "base_link")
+    {
+        axis << 0, 0, 1;
+    } else {
+        axis << 0, 1, 0;
+    }
+    
     seg.setAxis(axis);
     seg.setEpsAngle(pcl::deg2rad(10.0));
 
@@ -141,7 +149,7 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2 &msg)
     surface_points_pub_.publish(msg_out);
 
     double distance_above_plane;
-    ros::param::param("distance_above_plane", distance_above_plane, 0.005);
+    ros::param::param("distance_above_plane", distance_above_plane, 0.05);
 
     // Build custom indices that ignores points above the plane.
     pcl::PointIndices::Ptr table_plane_indices(new pcl::PointIndices());
@@ -174,7 +182,7 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2 &msg)
 
     visualization_msgs::Marker table_marker;
     table_marker.ns = "table";
-    table_marker.header.frame_id = "base_link";
+    table_marker.header.frame_id = FRAME;
     table_marker.type = visualization_msgs::Marker::CUBE;
     GetAxisAlignedBoundingBox(plane_cloud, &table_marker.pose, &table_marker.scale);
     table_marker.color.r = 1;
@@ -210,7 +218,7 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2 &msg)
         visualization_msgs::Marker object_marker;
         object_marker.ns = "objects";
         object_marker.id = i;
-        object_marker.header.frame_id = "base_link";
+        object_marker.header.frame_id = FRAME;
         object_marker.type = visualization_msgs::Marker::CUBE;
         GetAxisAlignedBoundingBox(object_cloud, &object_marker.pose,
                                   &object_marker.scale);
