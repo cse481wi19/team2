@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosbag
   sensor_msgs
   tf
+  simple_grasping
 )
 
 ## System dependencies are found with CMake's conventions

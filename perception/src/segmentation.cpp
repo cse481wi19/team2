@@ -15,12 +15,17 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 #include "visualization_msgs/Marker.h"
+#include "shape_msgs/SolidPrimitive.h"
+#include "geometry_msgs/Pose.h"
+#include "simple_grasping/shape_extraction.h"
 
 typedef pcl::PointXYZRGB PointC;
 typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudC;
 
 namespace perception {
-void SegmentSurface(PointCloudC::Ptr cloud, pcl::PointIndices::Ptr indices) {
+void SegmentSurface(PointCloudC::Ptr cloud,
+                    pcl::PointIndices::Ptr indices,
+                    pcl::ModelCoefficients::Ptr coeff_ptr) {
   pcl::PointIndices indices_internal;
   pcl::SACSegmentation<PointC> seg;
   seg.setOptimizeCoefficients(true);
@@ -43,6 +48,8 @@ void SegmentSurface(PointCloudC::Ptr cloud, pcl::PointIndices::Ptr indices) {
   // ax + by + cz + d = 0
   pcl::ModelCoefficients coeff;
   seg.segment(indices_internal, coeff);
+
+  *coeff_ptr = coeff;
 
   double distance_above_plane;
   ros::param::param("distance_above_plane", distance_above_plane, 0.005);
@@ -104,7 +111,7 @@ void SegmentSurfaceObjects(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
   double cluster_tolerance;
   int min_cluster_size, max_cluster_size;
   ros::param::param("ec_cluster_tolerance", cluster_tolerance, 0.01);
-  ros::param::param("ec_min_cluster_size", min_cluster_size, 150);
+  ros::param::param("ec_min_cluster_size", min_cluster_size, 400);
   ros::param::param("ec_max_cluster_size", max_cluster_size, 20000);
 
   pcl::EuclideanClusterExtraction<PointC> euclid;
@@ -166,8 +173,10 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
   crop.setMax(max_pt);
   crop.filter(*cropped_cloud);
 
+  pcl::ModelCoefficients::Ptr coeff(new pcl::ModelCoefficients());
+
   pcl::PointIndices::Ptr table_inliers(new pcl::PointIndices());
-  SegmentSurface(cropped_cloud, table_inliers);
+  SegmentSurface(cropped_cloud, table_inliers, coeff);
 
   PointCloudC::Ptr table_cloud(new PointCloudC());
   // Extract subset of original_cloud into table_cloud:
@@ -198,8 +207,23 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
     object_marker.id = i;
     object_marker.header.frame_id = "base_link";
     object_marker.type = visualization_msgs::Marker::CUBE;
-    GetAxisAlignedBoundingBox(object_cloud, &object_marker.pose,
-                              &object_marker.scale);
+    // GetAxisAlignedBoundingBox(object_cloud, &object_marker.pose,
+    //                           &object_marker.scale);
+
+    // Lab 33
+    PointCloudC::Ptr extract_out(new PointCloudC());
+    shape_msgs::SolidPrimitive shape;
+    geometry_msgs::Pose table_pose;
+    simple_grasping::extractShape(*object_cloud, coeff, *extract_out, shape,
+                                  table_pose);
+    if (shape.type == shape_msgs::SolidPrimitive::BOX) {
+      object_marker.scale.x = shape.dimensions[0];
+      object_marker.scale.y = shape.dimensions[1];
+      object_marker.scale.z = shape.dimensions[2];
+
+      object_marker.pose = table_pose;
+    }
+
     object_marker.color.g = 1;
     object_marker.color.a = 0.3;
     marker_pub_.publish(object_marker);
@@ -225,7 +249,25 @@ void Segmenter::Callback(const sensor_msgs::PointCloud2& msg) {
   table_marker.ns = "table";
   table_marker.header.frame_id = "base_link";
   table_marker.type = visualization_msgs::Marker::CUBE;
-  GetAxisAlignedBoundingBox(table_cloud, &table_marker.pose, &table_marker.scale);
+
+  // GetAxisAlignedBoundingBox(table_cloud, &table_marker.pose, &table_marker.scale);
+
+  // Lab 33
+  PointCloudC::Ptr extract_out(new PointCloudC());
+  shape_msgs::SolidPrimitive shape;
+  geometry_msgs::Pose table_pose;
+  simple_grasping::extractShape(*table_cloud, coeff, *extract_out, shape,
+                                table_pose);
+
+  if (shape.type == shape_msgs::SolidPrimitive::BOX) {
+    table_marker.scale.x = shape.dimensions[0];
+    table_marker.scale.y = shape.dimensions[1];
+    table_marker.scale.z = shape.dimensions[2];
+
+    table_marker.pose = table_pose;
+    table_marker.pose.position.z -= table_marker.scale.z;
+  }
+
   table_marker.color.r = 1;
   table_marker.color.a = 0.8;
   marker_pub_.publish(table_marker);
