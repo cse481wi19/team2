@@ -1,0 +1,6 @@
+{
+  "name": "roboeats",
+  "short_name": "roboeats",
+  "start_url": "/",
+  "display": "standalone"
+}
