@@ -4,6 +4,10 @@ import rospy
 import os
 import pickle
 
+import robot_api
+import tf
+import tf.transformations as tft
+
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
 
 from map_annotator import Annotator
@@ -20,6 +24,119 @@ def wait_for_time():
     while rospy.Time().now().to_sec() == 0:
         pass
 
+
+class Command(object):
+    POSE = 1
+    OPEN_GRIPPER = 2
+    CLOSE_GRIPPER = 3
+
+    NUM_TO_CMD = {POSE: "Pose", OPEN_GRIPPER: "Open gripper",
+                  CLOSE_GRIPPER: "Close gripper"}
+
+    def __init__(self, type, pose_stamped=None, alias=None):
+        self.type = type
+        self.pose_stamped = pose_stamped
+        self.alias = alias
+
+    def __str__(self):
+        if self.type == self.POSE:
+            return "Command(type=%s, alias='%s', frame_id='%s')" % (self.NUM_TO_CMD[self.type], str(self.alias), str(self.pose_stamped.header.frame_id))
+        else:
+            return "Command(type=%s)" % (self.NUM_TO_CMD[self.type])
+
+
+class Program(object):
+    def __init__(self):
+        self.commands = []
+
+    def add_pose_command(self, ps, alias):
+        self.commands.append(
+            Command(Command.POSE, pose_stamped=ps, alias=alias))
+
+    def add_open_gripper_command(self):
+        self.commands.append(Command(Command.OPEN_GRIPPER))
+
+    def add_close_gripper_command(self):
+        self.commands.append(Command(Command.CLOSE_GRIPPER))
+
+    def save_program(self, fp):
+        with open(fp, "wb") as save_file:
+            pickle.dump(self, save_file)
+
+    def print_program(self):
+        for i, command in enumerate(self.commands):
+            print(i, str(command))
+
+    def replace_frame(self, alias, new_frame):
+        for i, command in enumerate(self.commands):
+            if command.alias == alias:
+                old_frame = command.pose_stamped.header.frame_id
+                command.pose_stamped.header.frame_id = new_frame
+                print("Command %d: Replaced '%s' with '%s'" %
+                      (i, old_frame, new_frame))
+        print("New program:")
+        self.print_program()
+
+    def run(self):
+        try:
+            arm = robot_api.Arm()
+            gripper = robot_api.Gripper()
+            listener = tf.TransformListener()
+            rospy.sleep(1)
+            for command in self.commands:
+                if command.type == Command.POSE:
+                    print(command.pose_stamped)
+                    ps = command.pose_stamped
+                    curr_frame = command.pose_stamped.header.frame_id
+                    if curr_frame != "base_link":
+                        listener.waitForTransform(
+                            "base_link", curr_frame, rospy.Time(), rospy.Duration(4.0))
+                        while not rospy.is_shutdown():
+                            try:
+                                now = rospy.Time.now()
+                                listener.waitForTransform(
+                                    "base_link", curr_frame, now, rospy.Duration(4.0))
+                                (pos, rot) = listener.lookupTransform(
+                                    "base_link", curr_frame, now)
+                                break
+                            except:
+                                pass
+                        base_T_frame_matrix = tft.quaternion_matrix(rot)
+                        base_T_frame_matrix[0, 3] = pos[0]
+                        base_T_frame_matrix[1, 3] = pos[1]
+                        base_T_frame_matrix[2, 3] = pos[2]
+
+                        ori = ps.pose.orientation
+                        frame_T_gripper_matrix = tft.quaternion_matrix(
+                            [ori.x, ori.y, ori.z, ori.w])
+                        frame_T_gripper_matrix[0, 3] = ps.pose.position.x
+                        frame_T_gripper_matrix[1, 3] = ps.pose.position.y
+                        frame_T_gripper_matrix[2, 3] = ps.pose.position.z
+
+                        ans = np.dot(base_T_frame_matrix,
+                                     frame_T_gripper_matrix)
+                        ans2 = tft.quaternion_from_matrix(ans)
+                        ps = PoseStamped()
+                        ps.pose.position.x = ans[0, 3]
+                        ps.pose.position.y = ans[1, 3]
+                        ps.pose.position.z = ans[2, 3]
+                        ps.pose.orientation.x = ans2[0]
+                        ps.pose.orientation.y = ans2[1]
+                        ps.pose.orientation.z = ans2[2]
+                        ps.pose.orientation.w = ans2[3]
+                        ps.header.frame_id = "base_link"
+                    arm.move_to_pose(ps)
+                elif command.type == Command.OPEN_GRIPPER:
+                    gripper.open()
+                elif command.type == Command.CLOSE_GRIPPER:
+                    gripper.close()
+                else:
+                    print("UNKNOWN COMMAND " + str(command.type))
+                rospy.sleep(1)
+                print("Run succeeded!")
+        except Exception as e:
+            print("Run failed!")
+            print(e)
 
 FOOD_ITEMS_TOPIC = "/roboeats/food_items"
 
