@@ -69,7 +69,8 @@ class RoboEatsServer(object):
         #   DROPOFF_LOCATION_NAME - ending dropoff location.
         self._map_annotator = Annotator(save_file_path=nav_file_path)
         if not self._map_annotator.exists(self.MICROWAVE_LOCATION_NAME):
-            rospy.logwarn("Annotator is missing location '%s'" % (self.MICROWAVE_LOCATION_NAME))
+            rospy.logwarn("Annotator is missing location '%s'" % 
+                          (self.MICROWAVE_LOCATION_NAME))
         if not self._map_annotator.exists(self.DROPOFF_LOCATION_NAME):
             rospy.logwarn("Annotator is missing location '%s'" %
                           (self.DROPOFF_LOCATION_NAME))
@@ -81,6 +82,10 @@ class RoboEatsServer(object):
             rospy.loginfo("\t" + str(f))
 
     def __save_file__(self):
+        """
+        Saves the pickle file containing food item information.
+        """
+
         with open(self._save_file_path, "wb") as save_file:
             pickle.dump(self._food_items, save_file,
                         protocol=pickle.HIGHEST_PROTOCOL)
@@ -136,6 +141,7 @@ class RoboEatsServer(object):
         
         Arguments:
             program_fp {str} -- program file path
+            id {int} -- food id
         """
         if os.path.isfile(program_fp):
             rospy.loginfo("File " + program_fp + " exists. Loading...")
