@@ -54,7 +54,7 @@ class Command(object):
 
     def __str__(self):
         if self.type == self.POSE:
-            return "Command(type=%s, alias=%s, frame_id=%s)" % (self.NUM_TO_CMD[self.type], str(self.alias), str(self.pose_stamped.header.frame_id))
+            return "Command(type=%s, alias='%s', frame_id='%s')" % (self.NUM_TO_CMD[self.type], str(self.alias), str(self.pose_stamped.header.frame_id))
         else:
             return "Command(type=%s)" % (self.NUM_TO_CMD[self.type])
         
