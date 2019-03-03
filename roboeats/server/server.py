@@ -118,7 +118,7 @@ class RoboEatsServer(object):
         """
         input: request(id)
 
-        Removes the food item with the given id if it exists.
+        Removes the food item with the given id iff it exists.
         """
         self.__remove_food_item__(request.id)
         return RemoveFoodItemResponse()
