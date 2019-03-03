@@ -239,6 +239,7 @@ def main():
                         ps.pose.orientation.w = ans2[3]
                         ps.header.frame_id = frame
                     program.add_pose_command(ps, alias)
+                    print("done")
                 except tf.LookupException:
                     print("Failed to lookup given frame '%s'" % (frame))
             else:
