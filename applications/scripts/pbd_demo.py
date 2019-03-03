@@ -9,6 +9,7 @@ import os
 import tf
 import tf.transformations as tft
 
+from pbd import Command, Program
 from geometry_msgs.msg import PoseStamped
 from ar_track_alvar_msgs.msg import AlvarMarkers
 from robot_controllers_msgs.msg import QueryControllerStatesAction, QueryControllerStatesGoal, ControllerState
@@ -24,8 +25,8 @@ def print_commands():
     print("create: starts the creation of a program")
     print("save-pose|sp <frame>: saves the current pose relative to the given frame. <frame> can either be relative to the base or the tag.")
     print("save-pose|sp <alias> <frame>: saves the current pose relative to the given frame with an alias. <frame> can either be relative to the base or the tag.")
-    print("save-open-gripper: save open gripper cmd in sequence")
-    print("save-close-gripper: save close gripper cmd in sequence")
+    print("save-open-gripper|sog: save open gripper cmd in sequence")
+    print("save-close-gripper|scg: save close gripper cmd in sequence")
     print("replace-frame|rf <alias> <new_frame>: replaces frames in poses with the given alias")
     print("run-program: runs the current program sequence.")
     print("save-program <file_path>: saves the program to the given file path.")
@@ -40,111 +41,6 @@ def print_commands():
 def print_intro():
     print("Welcome to the program by demonstration!")
     print_commands()
-
-class Command(object):
-    POSE = 1
-    OPEN_GRIPPER = 2
-    CLOSE_GRIPPER = 3
-
-    NUM_TO_CMD = {POSE:"Pose", OPEN_GRIPPER:"Open gripper", CLOSE_GRIPPER:"Close gripper"}
-    def __init__(self, type, pose_stamped=None, alias=None):
-        self.type = type
-        self.pose_stamped = pose_stamped
-        self.alias = alias
-
-    def __str__(self):
-        if self.type == self.POSE:
-            return "Command(type=%s, alias='%s', frame_id='%s')" % (self.NUM_TO_CMD[self.type], str(self.alias), str(self.pose_stamped.header.frame_id))
-        else:
-            return "Command(type=%s)" % (self.NUM_TO_CMD[self.type])
-        
-
-class Program(object):
-    def __init__(self):
-        self.commands = []
-
-    def add_pose_command(self, ps, alias):
-        self.commands.append(Command(Command.POSE, pose_stamped=ps, alias=alias))
-        
-    def add_open_gripper_command(self):
-        self.commands.append(Command(Command.OPEN_GRIPPER))
-    
-    def add_close_gripper_command(self):
-        self.commands.append(Command(Command.CLOSE_GRIPPER))
-
-    def save_program(self, fp):
-        with open(fp, "wb") as save_file:
-            pickle.dump(self, save_file)
-
-    def print_program(self):
-        for i, command in enumerate(self.commands):
-            print(i, str(command))
-
-    def replace_frame(self, alias, new_frame):
-        for i, command in enumerate(self.commands):
-            if command.alias == alias:
-                old_frame = command.pose_stamped.header.frame_id
-                command.pose_stamped.header.frame_id = new_frame
-                print("Command %d: Replaced '%s' with '%s'" % (i, old_frame, new_frame))
-        print("New program:")
-        self.print_program()
-
-    def run(self):
-        try:
-            arm = robot_api.Arm()
-            gripper = robot_api.Gripper()
-            listener = tf.TransformListener()
-            rospy.sleep(1)
-            for command in self.commands:
-                if command.type == Command.POSE:
-                    print(command.pose_stamped)
-                    ps = command.pose_stamped
-                    curr_frame = command.pose_stamped.header.frame_id
-                    if curr_frame != "base_link":
-                        listener.waitForTransform("base_link", curr_frame, rospy.Time(), rospy.Duration(4.0))
-                        while not rospy.is_shutdown():
-                            try:
-                                now = rospy.Time.now()
-                                listener.waitForTransform("base_link", curr_frame, now, rospy.Duration(4.0))
-                                (pos, rot) = listener.lookupTransform("base_link", curr_frame, now)
-                                break
-                            except:
-                                pass
-                        base_T_frame_matrix = tft.quaternion_matrix(rot)
-                        base_T_frame_matrix[0, 3] = pos[0]
-                        base_T_frame_matrix[1, 3] = pos[1]
-                        base_T_frame_matrix[2, 3] = pos[2]
-
-                        ori = ps.pose.orientation
-                        frame_T_gripper_matrix = tft.quaternion_matrix([ori.x, ori.y, ori.z, ori.w])
-                        frame_T_gripper_matrix[0, 3] = ps.pose.position.x
-                        frame_T_gripper_matrix[1, 3] = ps.pose.position.y
-                        frame_T_gripper_matrix[2, 3] = ps.pose.position.z
-
-                        ans = np.dot(base_T_frame_matrix, frame_T_gripper_matrix)
-                        ans2 = tft.quaternion_from_matrix(ans)
-                        ps = PoseStamped()
-                        ps.pose.position.x = ans[0, 3]
-                        ps.pose.position.y = ans[1, 3]
-                        ps.pose.position.z = ans[2, 3]
-                        ps.pose.orientation.x = ans2[0]
-                        ps.pose.orientation.y = ans2[1]
-                        ps.pose.orientation.z = ans2[2]
-                        ps.pose.orientation.w = ans2[3]
-                        ps.header.frame_id = "base_link"
-                    arm.move_to_pose(ps)
-                elif command.type == Command.OPEN_GRIPPER:
-                    gripper.open()
-                elif command.type == Command.CLOSE_GRIPPER:
-                    gripper.close()
-                else:
-                    print("UNKNOWN COMMAND " + str(command.type))
-                rospy.sleep(1)
-                print("Run succeeded!")
-        except Exception as e:
-            print("Run failed!")
-            print(e)
-    
 
 class ArTagReader(object):
     def __init__(self):
@@ -244,9 +140,9 @@ def main():
                     print("Failed to lookup given frame '%s'" % (frame))
             else:
                 print("No frame given.")
-        elif cmd == "save-open-gripper":
+        elif cmd == "save-open-gripper" or cmd == "sog":
             program.add_open_gripper_command()
-        elif cmd == "save-close-gripper":
+        elif cmd == "save-close-gripper" or cmd == "scg":
             program.add_close_gripper_command()
         elif cmd == "replace-frame" or cmd == "rf":
             if num_args == 2:

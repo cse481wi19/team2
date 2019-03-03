@@ -11,6 +11,7 @@ import tf.transformations as tft
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
 
 from map_annotator import Annotator
+from pbd import Program, Command
 
 from roboeats.msg import FoodItems
 from roboeats.srv import CreateFoodItem, CreateFoodItemResponse
@@ -24,120 +25,6 @@ def wait_for_time():
     while rospy.Time().now().to_sec() == 0:
         pass
 
-
-class Command(object):
-    POSE = 1
-    OPEN_GRIPPER = 2
-    CLOSE_GRIPPER = 3
-
-    NUM_TO_CMD = {POSE: "Pose", OPEN_GRIPPER: "Open gripper",
-                  CLOSE_GRIPPER: "Close gripper"}
-
-    def __init__(self, type, pose_stamped=None, alias=None):
-        self.type = type
-        self.pose_stamped = pose_stamped
-        self.alias = alias
-
-    def __str__(self):
-        if self.type == self.POSE:
-            return "Command(type=%s, alias='%s', frame_id='%s')" % (self.NUM_TO_CMD[self.type], str(self.alias), str(self.pose_stamped.header.frame_id))
-        else:
-            return "Command(type=%s)" % (self.NUM_TO_CMD[self.type])
-
-
-class Program(object):
-    def __init__(self):
-        self.commands = []
-
-    def add_pose_command(self, ps, alias):
-        self.commands.append(
-            Command(Command.POSE, pose_stamped=ps, alias=alias))
-
-    def add_open_gripper_command(self):
-        self.commands.append(Command(Command.OPEN_GRIPPER))
-
-    def add_close_gripper_command(self):
-        self.commands.append(Command(Command.CLOSE_GRIPPER))
-
-    def save_program(self, fp):
-        with open(fp, "wb") as save_file:
-            pickle.dump(self, save_file)
-
-    def print_program(self):
-        for i, command in enumerate(self.commands):
-            print(i, str(command))
-
-    def replace_frame(self, alias, new_frame):
-        for i, command in enumerate(self.commands):
-            if command.alias == alias:
-                old_frame = command.pose_stamped.header.frame_id
-                command.pose_stamped.header.frame_id = new_frame
-                print("Command %d: Replaced '%s' with '%s'" %
-                      (i, old_frame, new_frame))
-        print("New program:")
-        self.print_program()
-
-    def run(self):
-        try:
-            arm = robot_api.Arm()
-            gripper = robot_api.Gripper()
-            listener = tf.TransformListener()
-            rospy.sleep(1)
-            for command in self.commands:
-                if command.type == Command.POSE:
-                    print(command.pose_stamped)
-                    ps = command.pose_stamped
-                    curr_frame = command.pose_stamped.header.frame_id
-                    if curr_frame != "base_link":
-                        listener.waitForTransform(
-                            "base_link", curr_frame, rospy.Time(), rospy.Duration(4.0))
-                        while not rospy.is_shutdown():
-                            try:
-                                now = rospy.Time.now()
-                                listener.waitForTransform(
-                                    "base_link", curr_frame, now, rospy.Duration(4.0))
-                                (pos, rot) = listener.lookupTransform(
-                                    "base_link", curr_frame, now)
-                                break
-                            except:
-                                pass
-                        base_T_frame_matrix = tft.quaternion_matrix(rot)
-                        base_T_frame_matrix[0, 3] = pos[0]
-                        base_T_frame_matrix[1, 3] = pos[1]
-                        base_T_frame_matrix[2, 3] = pos[2]
-
-                        ori = ps.pose.orientation
-                        frame_T_gripper_matrix = tft.quaternion_matrix(
-                            [ori.x, ori.y, ori.z, ori.w])
-                        frame_T_gripper_matrix[0, 3] = ps.pose.position.x
-                        frame_T_gripper_matrix[1, 3] = ps.pose.position.y
-                        frame_T_gripper_matrix[2, 3] = ps.pose.position.z
-
-                        ans = np.dot(base_T_frame_matrix,
-                                     frame_T_gripper_matrix)
-                        ans2 = tft.quaternion_from_matrix(ans)
-                        ps = PoseStamped()
-                        ps.pose.position.x = ans[0, 3]
-                        ps.pose.position.y = ans[1, 3]
-                        ps.pose.position.z = ans[2, 3]
-                        ps.pose.orientation.x = ans2[0]
-                        ps.pose.orientation.y = ans2[1]
-                        ps.pose.orientation.z = ans2[2]
-                        ps.pose.orientation.w = ans2[3]
-                        ps.header.frame_id = "base_link"
-                    arm.move_to_pose(ps)
-                elif command.type == Command.OPEN_GRIPPER:
-                    gripper.open()
-                elif command.type == Command.CLOSE_GRIPPER:
-                    gripper.close()
-                else:
-                    print("UNKNOWN COMMAND " + str(command.type))
-                rospy.sleep(1)
-                print("Run succeeded!")
-        except Exception as e:
-            print("Run failed!")
-            print(e)
-
 FOOD_ITEMS_TOPIC = "/roboeats/food_items"
 
 class FoodItem(object):
@@ -150,6 +37,7 @@ class FoodItem(object):
         return "FoodItem(name='%s', description='%s', id=%d)" % (self.name, self.description, self.id)
 
 class RoboEatsServer(object):
+    DEFAULT_TORSO_HEIGHT = 0.4
 
     MICROWAVE_LOCATION_NAME = "microwave_location"
     DROPOFF_LOCATION_NAME = "dropoff_location"
@@ -250,15 +138,17 @@ class RoboEatsServer(object):
             program_fp {str} -- program file path
         """
         if os.path.isfile(program_fp):
-            print("File " + program_fp + " exists. Loading...")
+            rospy.loginfo("File " + program_fp + " exists. Loading...")
             with open(program_fp, "rb") as load_file:
                 program = pickle.load(load_file)
-                print("Program loaded...")
+                rospy.loginfo("Program loaded...")
                 ar_marker_frame = self.__food_id_to_ar_frame__(id)
+                rospy.loginfo("Program before changes:")
+                program.print_program()
 
                 # Make the program relative to this food item
+                rospy.loginfo("Program after changes:")
                 program.replace_frame(self.FOOD_ALIAS, ar_marker_frame)
-                program.print_program()
                 program.run()
 
         else:
@@ -292,6 +182,11 @@ class RoboEatsServer(object):
         """
         id = request.id
         rospy.loginfo("Starting sequence for food item: " + str(self._food_items[id]))
+
+        rospy.loginfo("0. Adjust torso height")
+        torso = robot_api.Torso()
+        torso.set_height(self.DEFAULT_TORSO_HEIGHT)
+        rospy.sleep(2)
 
         rospy.loginfo("1. Move to start pose")
         self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
