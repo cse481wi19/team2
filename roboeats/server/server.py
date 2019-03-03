@@ -36,8 +36,9 @@ class RoboEatsServer(object):
 
     MICROWAVE_LOCATION_NAME = "microwave_location"
     DROPOFF_LOCATION_NAME = "dropoff_location"
+    FOOD_ALIAS = "food"
 
-    def __init__(self, save_file_path="food_items.pkl", nav_file_path="roboeats_nav.pkl"):
+    def __init__(self, save_file_path="food_items.pkl", nav_file_path="annotator_positions.pkl"):
         self._food_items_pub = rospy.Publisher(FOOD_ITEMS_TOPIC,
                                                FoodItems, queue_size=10, latch=True)
         rospy.loginfo("Given save file path: " + save_file_path)
@@ -62,6 +63,11 @@ class RoboEatsServer(object):
         #   MICROWAVE_LOCATION_NAME - starting location in front of the microwave.
         #   DROPOFF_LOCATION_NAME - ending dropoff location.
         self._map_annotator = Annotator(save_file_path=nav_file_path)
+        if not self._map_annotator.exists(self.MICROWAVE_LOCATION_NAME):
+            rospy.logwarn("Annotator is missing location '%s'" % (self.MICROWAVE_LOCATION_NAME))
+        if not self._map_annotator.exists(self.DROPOFF_LOCATION_NAME):
+            rospy.logwarn("Annotator is missing location '%s'" %
+                          (self.DROPOFF_LOCATION_NAME))
         rospy.loginfo("Initialization finished...")
 
     def __print_food_items__(self):
@@ -117,14 +123,112 @@ class RoboEatsServer(object):
         self.__remove_food_item__(request.id)
         return RemoveFoodItemResponse()
 
+    def __food_id_to_ar_frame__(self, id):
+        return "ar_marker_" + str(id)
+
+    def __load_program_and_run__(self, program_fp, id):
+        """Load a pickle file from the given file path and run it with respect to the given food id.
+        
+        Arguments:
+            program_fp {str} -- program file path
+        """
+        if os.path.isfile(program_fp):
+            print("File " + program_fp + " exists. Loading...")
+            with open(program_fp, "rb") as load_file:
+                program = pickle.load(load_file)
+                print("Program loaded...")
+                ar_marker_frame = self.__food_id_to_ar_frame__(id)
+
+                # Make the program relative to this food item
+                program.replace_frame(self.FOOD_ALIAS, ar_marker_frame)
+                program.print_program()
+                program.run()
+
+        else:
+            rospy.logerr("Program from given file path does not exist: " + program_fp)
+            raise Exception
+
+
     def handle_start_sequence(self, request):
         """
         input: request(id)
 
         Starts the entire food sequence and removes the food item from the dictionary after it has been finished.
+
+        Sequence:
+
+        1. Move to start pose
+        2. Open microwave
+        3. Grab lunchbox
+        4. Put it into microwave
+        5. Close microwave
+        6. Enter time (1 min)
+        7. Start microwave
+        8. Wait for food to finish microwaving
+        9. Wait for cooldown
+        10. Open microwave
+        11. Grab lunchbox
+        12. Move to dropoff pose
+        13. Put down lunchbox
+        14. Move to start pose
+        15. Close microwave
         """
         id = request.id
-        print("Starting sequence for food item: " + str(self._food_items[id]))
+        rospy.loginfo("Starting sequence for food item: " + str(self._food_items[id]))
+
+        rospy.loginfo("1. Move to start pose")
+        self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
+        rospy.sleep(2)
+
+        rospy.loginfo("2. Open microwave")
+        self.__load_program_and_run__("pbd2.pkl", id)
+
+        rospy.loginfo("3. Grab lunchbox")
+        self.__load_program_and_run__("pbd1.pkl", id)
+
+        rospy.loginfo("4. Put it into microwave")
+        self.__load_program_and_run__("pbd3.pkl", id)
+
+        rospy.loginfo("5. Close microwave")
+        self.__load_program_and_run__("pbd4.pkl", id)
+
+        rospy.loginfo("6. Enter time(1 min)")
+        self.__load_program_and_run__("pbd5.pkl", id)
+
+        rospy.loginfo("7. Start microwave")
+        self.__load_program_and_run__("pbd6.pkl", id)
+
+        rospy.loginfo("8. Wait for food to finish microwaving (in seconds)")
+        rospy.sleep(60)
+
+        rospy.loginfo("9. Wait for cooldown (in seconds)")
+        rospy.sleep(40) 
+
+        rospy.loginfo("10. Open microwave")
+        self.__load_program_and_run__("pbd2.pkl", id)
+
+        rospy.loginfo("11. Grab lunchbox")
+        self.__load_program_and_run__("pbd1.pkl", id)
+
+        rospy.loginfo("12. Move to dropoff pose")
+        self._map_annotator.goto_position(self.DROPOFF_LOCATION_NAME)
+        rospy.sleep(2)
+
+        rospy.loginfo("13. Put down lunchbox")
+        self.__load_program_and_run__("pbd7.pkl", id)
+
+        rospy.loginfo("14. Move to start pose")
+        self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
+        rospy.sleep(2)
+
+        rospy.loginfo("15. Close microwave")
+        self.__load_program_and_run__("pbd4.pkl", id)
+
+        rospy.loginfo("Remove food item from the list.")
+        self.__remove_food_item__(id)
+
+        rospy.loginfo("Finished sequence.")
+
         return StartSequenceResponse()
 
 

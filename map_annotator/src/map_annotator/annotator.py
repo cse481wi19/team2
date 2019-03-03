@@ -11,22 +11,28 @@ from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseGoal, MoveBaseAction
 class Annotator(object):                                
 
     def __init__(self, save_file_path="annotator_positions.pkl"):
-        print("Given save file path: " + save_file_path)
+        rospy.loginfo("Given save file path: " + save_file_path)
         if os.path.isfile(save_file_path):
-            print("File already exists, loading saved positions.")
+            rospy.loginfo("File already exists, loading saved positions.")
             with open(save_file_path, "rb") as save_file:
                 try:
                     self._positions = pickle.load(save_file)
                 except EOFError:
                     # this can be caused if the file is empty.
                     self._positions = {}
-                print("File loaded...")
+                rospy.loginfo("File loaded...")
         else:
             self._positions = {}
-
         self._save_file_path = save_file_path
+        self.__print_positions__()
+        
         self._client = actionlib.SimpleActionClient('move_base/', MoveBaseAction)
         self._client.wait_for_server()
+
+    def __print_positions__(self):
+        rospy.loginfo("Current positions:")
+        for k in self._positions:
+            rospy.loginfo("\t" + k)
 
     def __save_file__(self):
         with open(self._save_file_path, "wb") as save_file:
