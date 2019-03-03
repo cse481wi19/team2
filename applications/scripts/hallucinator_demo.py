@@ -28,7 +28,7 @@ def main():
         rospy.logerr('Could not load point cloud from {}'.format(path))
         return
 
-    print("RUNNING NOW")
+    print("RUNNING NOW! Remember to load this point cloud with 'cam_image_topic:=mock_point_cloud'")
     pub = rospy.Publisher('mock_point_cloud', PointCloud2, queue_size=1)       
     rate = rospy.Rate(2)
     while not rospy.is_shutdown():
