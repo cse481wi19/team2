@@ -1,0 +1,62 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="roboeats-food-item">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+
+        <ros-service id="removeFoodService" on-response="_handleRemoveFoodSuccess" on-fail="_handleRemoveFoodError"
+            name="roboeats/remove_food_item" ros="{{ros}}" service-type="roboeats/RemoveFoodItem"></ros-service>
+        <ros-service id="startFoodService" on-response="_handleStartFoodSuccess" on-fail="_handleStartFoodError"
+            name="roboeats/start_sequence" ros="{{ros}}" service-type="roboeats/StartSequence"></ros-service>
+
+        [[foodItem.name]]
+        [[foodItem.description]]
+        [[foodItem.id]]
+        <paper-button on-tap="_handleRemove">Remove</paper-button>
+        <paper-button on-tap="_handleStart">Start</paper-button>
+    </template>
+
+    <script>
+        class RoboeatsFoodItem extends Polymer.Element {
+            static get is() { return 'roboeats-food-item'; }
+            static get properties() {
+                return {
+                    foodItem: Object,
+                    ros: Object
+                };
+            }
+
+            _handleStart(evt) {
+                console.log('Starting...', this.foodItem);
+                this.$.startFoodService.call({ id: this.foodItem.id });
+            }
+
+            _handleStartFoodSuccess(evt) {
+                this.status = 'Success: ' + evt.detail;
+            }
+
+            _handleStartFoodError(evt) {
+                this.status = 'Error: ' + evt.detail;
+            }
+            
+            _handleRemove(evt) {
+                console.log('Removing', this.foodItem);
+                this.$.removeFoodService.call({id : this.foodItem.id});
+            }
+
+            _handleRemoveFoodSuccess(evt) {
+                this.status = 'Success: ' + evt.detail;
+            }
+
+            _handleRemoveFoodError(evt) {
+                this.status = 'Error: ' + evt.detail;
+            }
+        }
+        window.customElements.define(RoboeatsFoodItem.is, RoboeatsFoodItem);
+    </script>
+</dom-module>

@@ -1,4 +1,12 @@
 <launch>
+  <!-- rosbridge server for the frontend -->
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+
+  <!-- map file for navigation -->
+  <arg name="map_file" default="/home/kiet/catkin_ws/src/cse481wi19/maps/map.yaml" />
+  <include file="$(find fetch_navigation)/launch/fetch_nav.launch">
+    <arg name="map_file" value="$(arg map_file)" />
+  </include>
 
   <include file="$(find robot_api)/launch/planning_context.launch" />
 

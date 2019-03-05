@@ -64,16 +64,19 @@ class RoboEatsServer(object):
         self._save_file_path = save_file_path
         self.__pub_food_items__()
 
+        rospy.loginfo("Starting map annotator...")
         # We should expect the nav file given to contain the annotated positions:
         #   MICROWAVE_LOCATION_NAME - starting location in front of the microwave.
         #   DROPOFF_LOCATION_NAME - ending dropoff location.
-        self._map_annotator = Annotator(save_file_path=nav_file_path)
-        if not self._map_annotator.exists(self.MICROWAVE_LOCATION_NAME):
-            rospy.logwarn("Annotator is missing location '%s'" % 
-                          (self.MICROWAVE_LOCATION_NAME))
-        if not self._map_annotator.exists(self.DROPOFF_LOCATION_NAME):
-            rospy.logwarn("Annotator is missing location '%s'" %
-                          (self.DROPOFF_LOCATION_NAME))
+        
+        # TODO: Remember to uncomment this section when we get the map working.
+        # self._map_annotator = Annotator(save_file_path=nav_file_path)
+        # if not self._map_annotator.exists(self.MICROWAVE_LOCATION_NAME):
+        #     rospy.logwarn("Annotator is missing location '%s'" % 
+        #                   (self.MICROWAVE_LOCATION_NAME))
+        # if not self._map_annotator.exists(self.DROPOFF_LOCATION_NAME):
+        #     rospy.logwarn("Annotator is missing location '%s'" %
+        #                   (self.DROPOFF_LOCATION_NAME))
         rospy.loginfo("Initialization finished...")
 
     def __print_food_items__(self):

@@ -153,6 +153,8 @@ class Arm(object):
                     replan=False,
                     replan_attempts=5,
                     tolerance=0.01,
+                    max_acceleration_scaling_factor=0,
+                    max_velocity_scaling_factor=0,
                     orientation_constraint=None):
         """Moves the end-effector to a pose, using motion planning.
 
@@ -189,6 +191,8 @@ class Arm(object):
         goal_builder.replan = replan
         goal_builder.replan_attempts = replan_attempts
         goal_builder.tolerance = tolerance
+        goal_builder.max_acceleration_scaling_factor = max_acceleration_scaling_factor
+        goal_builder.max_velocity_scaling_factor = max_velocity_scaling_factor
         if orientation_constraint is not None:
             goal_builder.add_path_orientation_constraint(orientation_constraint)
         goal = goal_builder.build()

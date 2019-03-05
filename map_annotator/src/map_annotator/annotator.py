@@ -27,7 +27,9 @@ class Annotator(object):
         self.__print_positions__()
         
         self._client = actionlib.SimpleActionClient('move_base/', MoveBaseAction)
+        rospy.loginfo("Waiting for server...")
         self._client.wait_for_server()
+        rospy.loginfo("Got connection.")
 
     def __print_positions__(self):
         rospy.loginfo("Current positions:")
