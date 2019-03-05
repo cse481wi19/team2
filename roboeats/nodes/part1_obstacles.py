@@ -22,7 +22,10 @@ def main():
     planning_scene.removeCollisionObject('table')
     planning_scene.removeCollisionObject('floor')
     planning_scene.addBox('floor', 2, 2, 0.01, 0, 0, 0.01/2)
-    planning_scene.addBox('table', 0.5, 1, 0.82, 0.8, 0, 0.72/2)
+    table_height = 0.767
+    table_width = 0.7
+    table_x = 0.95
+    planning_scene.addBox('table', table_width, 2, table_height, table_x, 0, table_height/2)
     planning_scene.addBox('robot_base', 0.54, 0.52, 0.37, 0, 0, 0.37/2)
 
     rospy.sleep(2)
