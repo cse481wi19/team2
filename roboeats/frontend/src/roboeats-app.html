@@ -65,9 +65,9 @@
       }
 
       _addFoodItem() {
-        var name = prompt()
-        var description = prompt()
-        var id = parseInt(prompt())
+        var name = prompt("Name")
+        var description = prompt("Description")
+        var id = parseInt(prompt("ID"))
         this.$.createFoodService.call({ name: name, description: description, id: id});
       }
 
