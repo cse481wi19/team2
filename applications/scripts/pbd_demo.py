@@ -36,6 +36,8 @@ def print_commands():
     print("arm-unrelax: unrelaxes the arm")
     print("tags: print the available tag frames")
     print("stop: stops the demo")
+    print("setoc: enable horizontal orientation constraint")
+    print("disableoc: disable horizontal orientatation constraint")
     print("help: Show this list of commands")
 
 def print_intro():
@@ -64,6 +66,17 @@ def create_transform_matrix(transform):
     matrix[2, 3] = pos[2]
     return matrix
 
+def create_horizontal_orientation_constraint():
+  # create a horizontal orientation constraint so that the soup won't spill
+  # WARNING: the spec says this will be really slow, so use with caution
+  oc.header.frame_id = 'base_link'
+  oc.link_name = 'wrist_roll_link'
+  oc.orientation.w = 1
+  oc.absolute_x_axis_tolerance = 3.14
+  oc.absolute_y_axis_tolerance = 3.14
+  oc.absolute_z_axis_tolerance = 0.1
+  oc.weight = 1.0
+
 def main():
     rospy.init_node("annotator_node")
     wait_for_time()
@@ -80,6 +93,8 @@ def main():
     program = Program()
     print("Program created.")
     running = True
+    # default: no orientation constraint
+    orientation_constraint = None
     while running:
         user_input = raw_input(">>>")
         if not user_input:
@@ -152,7 +167,7 @@ def main():
             else:
                 print("Expected 2 arguments, got " + str(num_args))
         elif cmd == "run-program":
-            program.run()
+            program.run(orientation_constraint)
         elif cmd == "save-program":
             if len(args) == 2:
                 fp = args[1]
@@ -200,6 +215,10 @@ def main():
             print_commands()
         elif cmd == "stop":
             running = False
+        elif cmd == 'setoc':
+            orientation_constraint = create_horizontal_orientation_constraint()
+        elif cmd == 'disableoc':
+            orientation_constraint = None
         else:
             print("NO SUCH COMMAND: " + cmd)
         print("")
