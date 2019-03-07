@@ -17,6 +17,7 @@ def print_commands():
     print("delete <name>: Delete the pose given by <name>.")
     print("goto <name>: Sends the robot to the pose given by <name>.")
     print("help: Show this list of commands")
+    print("stop: stops the program")
 
 def print_intro():
     print("Welcome to the map annotator!")
@@ -26,6 +27,7 @@ def main():
     rospy.init_node("annotator_node")
     wait_for_time()
     annotator = Annotator()
+    print_commands()
     running = True
     while running:
         user_input = raw_input(">>>")
@@ -35,7 +37,7 @@ def main():
         args = user_input.split(" ", 1)
         cmd = args[0]
         if cmd == "list":
-            positions = annotator.get_positions()
+            positions = annotator.get_position_names()
             print("Poses:")
             for position in positions:
                 print("\t" + position)

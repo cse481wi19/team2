@@ -1,0 +1,103 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/ros-websocket/ros-websocket.html">
+<link rel="import" href="../bower_components/ros-topic/ros-topic.html">
+<link rel="import" href="../bower_components/ros-service/ros-service.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<link rel="import" href="roboeats-food-item.html">
+
+<dom-module id="roboeats-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <ros-websocket auto ros="{{ros}}" url="{{url}}" on-connection="_handleConnection" on-close="_handleConnectionClose"
+      on-error="_handleConnectionError"></ros-websocket>
+    <ros-topic auto ros="{{ros}}" topic="roboeats/food_items" msg-type="roboeats/FoodItems"
+      last-message="{{foodItems}}" on-message="_handleFoodItems"></ros-topic>
+
+    <ros-service id="createFoodService" on-response="_handleCreateFoodSuccess" on-fail="_handleCreateFoodError"
+      name="roboeats/create_food_item" ros="{{ros}}" service-type="roboeats/CreateFoodItem"></ros-service>
+
+    <h2>Hello [[prop1]]!</h2>
+    [[status]]
+
+    <h2>Food Items</h2>
+    <paper-button on-tap="_addFoodItem">Add Food Item</paper-button>
+    <template is="dom-repeat" items="[[_parseFoodItems(foodItems)]]">
+      <roboeats-food-item ros="[[ros]]" food-item="[[item]]"></roboeats-food-item>
+    </template>
+
+  </template>
+
+  
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class RoboeatsApp extends Polymer.Element {
+      static get is() { return 'roboeats-app'; }
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'roboeats-app'
+          }
+        };
+      }
+
+      _parseFoodItems(request) {
+        console.log("parse food items")
+        if (request != null) {
+          console.log(request)
+          var food_items = []
+          for (var i = 0; i < request.names.length; i++) {
+            food_items.push({name: request.names[i], description: request.descriptions[i], id: request.ids[i]})
+          }
+          return food_items
+        } else {
+          return request
+        }
+      }
+
+      _addFoodItem() {
+        var name = prompt()
+        var description = prompt()
+        var id = parseInt(prompt())
+        this.$.createFoodService.call({ name: name, description: description, id: id});
+      }
+
+      _handleCreateFoodSuccess(evt) {
+        this.status = 'Success: ' + evt.detail;
+      }
+
+      _handleCreateFoodError(evt) {
+        this.status = 'Error: ' + evt.detail;
+      }
+
+      _handleFoodItems(evt) {
+        var msg = evt.detail;
+        console.log('Pose list: ', msg);
+      }
+
+      _handleConnection() {
+        this.status = 'Connected to the websocket server.';
+        console.log(this.status);
+      }
+      _handleConnectionClose() {
+        this.status = 'Closed connection to the websocket server.';
+        console.log(this.status);
+      }
+      _handleConnectionError() {
+        this.status = 'Error connecting to the websocket server.';
+        console.log(this.status);
+      }
+    }
+
+    window.customElements.define(RoboeatsApp.is, RoboeatsApp);
+  </script>
+</dom-module>

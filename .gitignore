@@ -1,9 +1,8 @@
-*.pyc
-*~
-cmake*
 
-web_teleop/frontend/\.vscode/
+\.idea/
 
 \.vscode/
 
-\.idea/
+cmake-build-debug/
+
+*.pyc
