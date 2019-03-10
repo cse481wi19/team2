@@ -17,7 +17,7 @@ def main():
 
     sleep_time = 1.5
 
-    annotator.goto_position("start_location")
+    # annotator.goto_position("start_location")
     rospy.sleep(sleep_time)
     annotator.goto_position("microwave_location_1")
     rospy.sleep(sleep_time)
