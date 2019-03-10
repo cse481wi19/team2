@@ -12,6 +12,7 @@ import tf.transformations as tft
 from pbd import Command, Program
 from geometry_msgs.msg import PoseStamped
 from ar_track_alvar_msgs.msg import AlvarMarkers
+from moveit_msgs.msg import OrientationConstraint
 from robot_controllers_msgs.msg import QueryControllerStatesAction, QueryControllerStatesGoal, ControllerState
 
 def wait_for_time():                                              
@@ -69,6 +70,7 @@ def create_transform_matrix(transform):
 def create_horizontal_orientation_constraint():
   # create a horizontal orientation constraint so that the soup won't spill
   # WARNING: the spec says this will be really slow, so use with caution
+  oc = OrientationConstraint()
   oc.header.frame_id = 'base_link'
   oc.link_name = 'wrist_roll_link'
   oc.orientation.w = 1
@@ -76,6 +78,7 @@ def create_horizontal_orientation_constraint():
   oc.absolute_y_axis_tolerance = 3.14
   oc.absolute_z_axis_tolerance = 0.1
   oc.weight = 1.0
+  return oc
 
 def main():
     rospy.init_node("annotator_node")
@@ -216,8 +219,10 @@ def main():
             running = False
         elif cmd == 'setoc':
             program.add_orientation_constraint(create_horizontal_orientation_constraint())
+            print('orietation constraint is set')
         elif cmd == 'disableoc':
             program.remove_orientation_constraint()
+            print('orientation constraint is disabled')
         else:
             print("NO SUCH COMMAND: " + cmd)
         print("")
