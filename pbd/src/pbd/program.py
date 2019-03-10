@@ -10,6 +10,13 @@ from command import Command
 class Program(object):
     def __init__(self):
         self.commands = []
+        self.orientation_constraint = None
+
+    def add_orientation_constraint(self, oc):
+        self.orientation_constraint = oc
+
+    def remove_orientation_constraint(self):
+        self.orientation_constraint = None
 
     def add_pose_command(self, ps, alias):
         self.commands.append(
@@ -39,7 +46,7 @@ class Program(object):
         print("New program:")
         self.print_program()
 
-    def run(self, orientation_constraint=None):
+    def run(self):
         try:
             arm = robot_api.Arm()
             gripper = robot_api.Gripper()
@@ -88,7 +95,7 @@ class Program(object):
                         ps.pose.orientation.z = ans2[2]
                         ps.pose.orientation.w = ans2[3]
                         ps.header.frame_id = "base_link"
-                    arm.move_to_pose(ps, orientation_constraint=orientation_constraint)
+                    arm.move_to_pose(ps, orientation_constraint=self.orientation_constraint)
                 elif command.type == Command.OPEN_GRIPPER:
                     gripper.open()
                 elif command.type == Command.CLOSE_GRIPPER:

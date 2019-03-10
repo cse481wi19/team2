@@ -94,7 +94,6 @@ def main():
     print("Program created.")
     running = True
     # default: no orientation constraint
-    orientation_constraint = None
     while running:
         user_input = raw_input(">>>")
         if not user_input:
@@ -167,7 +166,7 @@ def main():
             else:
                 print("Expected 2 arguments, got " + str(num_args))
         elif cmd == "run-program":
-            program.run(orientation_constraint)
+            program.run()
         elif cmd == "save-program":
             if len(args) == 2:
                 fp = args[1]
@@ -216,9 +215,9 @@ def main():
         elif cmd == "stop":
             running = False
         elif cmd == 'setoc':
-            orientation_constraint = create_horizontal_orientation_constraint()
+            program.add_orientation_constraint(create_horizontal_orientation_constraint())
         elif cmd == 'disableoc':
-            orientation_constraint = None
+            program.remove_orientation_constraint()
         else:
             print("NO SUCH COMMAND: " + cmd)
         print("")
