@@ -5,6 +5,7 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 
 <link rel="import" href="roboeats-food-item.html">
+<link rel="import" href="roboeatslogo.jpg">
 
 <dom-module id="roboeats-app">
   <template>
@@ -12,6 +13,45 @@
       :host {
         display: block;
       }
+
+      div.top {
+        background-color: darkseagreen;
+        letter-spacing: 2px;
+      }
+
+      paper-button.addfood {
+        bottom: 50px;
+        background-color:lightgray;
+        position: fixed;
+        font-size: 110%;
+      }
+
+      h1 {
+        letter-spacing: 2px;
+      }
+
+      .form-popup {
+        display: none;
+      }
+
+    .form-container {
+      max-width: 300px;
+      padding: 10px;
+      background-color: white;
+    }
+
+    .form-container input[type=text]:focus, .form-container input[type=text]:focus, .form-container input[type=text]:focus {
+      background-color: #ddd;
+      outline:none;
+    }
+
+    .form-container .cancel {
+      background-color: red;
+    }
+
+
+
+
     </style>
     <ros-websocket auto ros="{{ros}}" url="{{url}}" on-connection="_handleConnection" on-close="_handleConnectionClose"
       on-error="_handleConnectionError"></ros-websocket>
@@ -21,11 +61,33 @@
     <ros-service id="createFoodService" on-response="_handleCreateFoodSuccess" on-fail="_handleCreateFoodError"
       name="roboeats/create_food_item" ros="{{ros}}" service-type="roboeats/CreateFoodItem"></ros-service>
 
+    <div class="top">
+      
+      <h1>
+        <font size="100">RoboEats</font>
+      </h1>
+    </div>
+
     <h2>Hello [[prop1]]!</h2>
     [[status]]
 
     <h2>Food Items</h2>
-    <paper-button on-tap="_addFoodItem">Add Food Item</paper-button>
+    <paper-button raised class="custom addfood" on-tap="_addFoodItem"><b>+</b></paper-button>
+
+    <div class="form-popup" id="myForm">
+      <form action="/action_page.php" class="form-container">
+        <label for="name"><b>Name</b></label>
+        <input type="text" name="name" required>
+
+        <label for="description"><b>Description</b></label>
+        <input type="text" name="description" required>
+
+        <label for="email"><b>Name</b></label>
+        <input type="text" name="id" required>
+
+        <button type="button" class="btn cancel" onclick="_closeForm()">Close</button>
+    </div>
+
     <template is="dom-repeat" items="[[_parseFoodItems(foodItems)]]">
       <roboeats-food-item ros="[[ros]]" food-item="[[item]]"></roboeats-food-item>
     </template>
@@ -35,6 +97,7 @@
   
 
   <script>
+
     /**
      * @customElement
      * @polymer
@@ -50,6 +113,11 @@
         };
       }
 
+
+      _closeForm() {
+        document.getElementById("myForm").style.display = "none";
+      }
+
       _parseFoodItems(request) {
         console.log("parse food items")
         if (request != null) {
@@ -62,6 +130,11 @@
         } else {
           return request
         }
+      }
+
+      _openForm() {
+        this.status = "HERE";
+        document.getElementById("myForm").style.display = "block";
       }
 
       _addFoodItem() {

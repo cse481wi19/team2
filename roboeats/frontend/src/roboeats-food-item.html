@@ -7,18 +7,40 @@
             :host {
                 display: block;
             }
+
+            div.food {
+                width: 75%;
+                font-size: 200%;
+                text-align: center;
+                float: left;
+                background-color: aquamarine;
+                border-color: white;
+                border-style: solid;
+            }
+
+
+            paper-button.myown {
+                width: 10%;
+                float: right;
+                background-color: cornsilk;
+                color: black;
+                font-size: 90%;
+            }
+
         </style>
 
         <ros-service id="removeFoodService" on-response="_handleRemoveFoodSuccess" on-fail="_handleRemoveFoodError"
             name="roboeats/remove_food_item" ros="{{ros}}" service-type="roboeats/RemoveFoodItem"></ros-service>
         <ros-service id="startFoodService" on-response="_handleStartFoodSuccess" on-fail="_handleStartFoodError"
             name="roboeats/start_sequence" ros="{{ros}}" service-type="roboeats/StartSequence"></ros-service>
-
-        [[foodItem.name]]
-        [[foodItem.description]]
-        [[foodItem.id]]
-        <paper-button on-tap="_handleRemove">Remove</paper-button>
-        <paper-button on-tap="_handleStart">Start</paper-button>
+        <div class="food">
+            <p>
+                Name: [[foodItem.name]]
+            <br>Description: [[foodItem.description]]
+            <br>ID: [[foodItem.id]]</p>
+        </div>
+        <paper-button raised class="custom myown" on-tap="_handleRemove">Remove</paper-button>
+        <paper-button raised class="custom myown" on-tap="_handleStart">Start</paper-button>
     </template>
 
     <script>
