@@ -88,7 +88,9 @@ class Program(object):
                         ps.pose.orientation.z = ans2[2]
                         ps.pose.orientation.w = ans2[3]
                         ps.header.frame_id = "base_link"
-                    arm.move_to_pose(ps)
+                    res = arm.move_to_pose(ps)
+                    if res is None:
+                        print("Actually failed ------ T.T")
                 elif command.type == Command.OPEN_GRIPPER:
                     gripper.open()
                 elif command.type == Command.CLOSE_GRIPPER:
