@@ -164,34 +164,8 @@ class RoboEatsServer(object):
             rospy.logerr("Program from given file path does not exist: " + program_fp)
             raise Exception
 
-
-    def handle_start_sequence(self, request):
-        """
-        input: request(id)
-
-        Starts the entire food sequence and removes the food item from the dictionary after it has been finished.
-
-        Sequence:
-
-        1. Move to start pose
-        2. Open microwave
-        3. Grab lunchbox
-        4. Put it into microwave
-        5. Close microwave
-        6. Enter time (1 min)
-        7. Start microwave
-        8. Wait for food to finish microwaving
-        9. Wait for cooldown
-        10. Open microwave
-        11. Grab lunchbox
-        12. Move to dropoff pose
-        13. Put down lunchbox
-        14. Move to start pose
-        15. Close microwave
-        """
-        id = request.id
-        rospy.loginfo("Starting sequence for food item: " + str(self._food_items[id]))
-
+    def start_segment1(self, id):
+        rospy.loginfo("STARTING SEGMENT 1")
         rospy.loginfo("0. Adjust torso height")
         torso = robot_api.Torso()
         torso.set_height(self.DEFAULT_TORSO_HEIGHT)
@@ -212,7 +186,10 @@ class RoboEatsServer(object):
  
         rospy.loginfo("5. Close microwave")
         self.__load_program_and_run__("pbd4.pkl", id)
+        rospy.loginfo("FINISHED SEGMENT 1")
 
+    def start_segment2(self, id):
+        rospy.loginfo("STARTING SEGMENT 2")
         rospy.loginfo("6. Enter time(1 min)")
         self.__load_program_and_run__("pbd5.pkl", id)
 
@@ -224,7 +201,10 @@ class RoboEatsServer(object):
 
         rospy.loginfo("9. Wait for cooldown (in seconds)")
         rospy.sleep(40) 
+        rospy.loginfo("FINISHED SEGMENT 2")
 
+    def start_segment3(self, id):
+        rospy.loginfo("STARTING SEGMENT 3")
         rospy.loginfo("10. Open microwave")
         self.__load_program_and_run__("pbd2.pkl", id)
 
@@ -237,13 +217,57 @@ class RoboEatsServer(object):
 
         rospy.loginfo("13. Put down lunchbox")
         self.__load_program_and_run__("pbd7.pkl", id)
+        rospy.loginfo("FINISHED SEGMENT 3")
 
+    def start_segment4(self, id):
+        rospy.loginfo("STARTING SEGMENT 4")
         rospy.loginfo("14. Move to start pose")
         self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
         rospy.sleep(2)
 
         rospy.loginfo("15. Close microwave")
         self.__load_program_and_run__("pbd4.pkl", id)
+        rospy.loginfo("FINISHED SEGMENT 4")
+
+    def handle_start_sequence(self, request):
+        """
+        input: request(id)
+
+        Starts the entire food sequence and removes the food item from the dictionary after it has been finished.
+
+        Sequence:
+
+        (Segment 1)
+            0. Move torso to default position
+            1. Move to start pose
+            2. Open microwave
+            3. Grab lunchbox
+            4. Put it into microwave
+            5. Close microwave
+        (Segment 2)
+            6. Enter time (1 min)
+            7. Start microwave
+            8. Wait for food to finish microwaving
+            9. Wait for cooldown
+        (Segment 3)
+            10. Open microwave
+            11. Grab lunchbox
+            12. Move to dropoff pose
+            13. Put down lunchbox
+        (Segment 4)
+            14. Move to start pose
+            15. Close microwave
+        """
+        id = request.id
+        rospy.loginfo("Starting sequence for food item: " + str(self._food_items[id]))
+
+        self.start_segment1(id)
+
+        self.start_segment2(id)
+
+        self.start_segment3(id)
+
+        self.start_segment4(id)
 
         rospy.loginfo("Remove food item from the list.")
         self.__remove_food_item__(id)
