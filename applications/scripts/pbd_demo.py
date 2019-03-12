@@ -28,7 +28,7 @@ def print_commands():
     print("save-open-gripper|sog: save open gripper cmd in sequence")
     print("save-close-gripper|scg: save close gripper cmd in sequence")
     print("replace-frame|rf <alias> <new_frame>: replaces frames in poses with the given alias")
-    print("run-program: runs the current program sequence.")
+    print("run-program|rp: runs the current program sequence.")
     print("save-program <file_path>: saves the program to the given file path.")
     print("load-program <file_path>: loads the program from the given file path.")
     print("print-program|ls|list: print the current program sequence")
@@ -47,15 +47,19 @@ class ArTagReader(object):
         self.markers = []
 
     def callback(self, msg):
-        # Filter to AR tag marker with ids of 0 or 15
-        # so literally only the microwave and the lunchbox we want
-        # to pick up.
-        # This is necessary because Fetch detects AR tags that don't
-        # exist with ids between 0 and 15 too (such as 3, 7, 9, etc.)
-        for m in msg.markers:
-            if m.id == 0 or m.id == 15:
-                self.markers.append(m)
-        # self.markers = msg.markers
+        try:
+            # Filter to AR tag marker with ids of 0 or 15
+            # so literally only the microwave and the lunchbox we want
+            # to pick up.
+            # This is necessary because Fetch detects AR tags that don't
+            # exist with ids between 0 and 15 too (such as 3, 7, 9, etc.)
+            self.markers = []
+            for m in msg.markers:
+                if m.id == 0 or m.id == 15:
+                    self.markers.append(m)
+            # self.markers = msg.markers
+        except Exception as e:
+            print("GOT EXCEPTISDOAUFHUASJFSADf?!@?#!@?!@?#!@?#!@")
     
     def get_available_tag_frames(self):
         tag_frames = []
@@ -85,7 +89,7 @@ def main():
     controller_client = actionlib.SimpleActionClient('query_controller_states', QueryControllerStatesAction)
 
     print_intro()
-    program = Program()
+    program = Program(listener)
     print("Program created.")
     running = True
     while running:
@@ -144,8 +148,8 @@ def main():
                         ps.header.frame_id = frame
                     program.add_pose_command(ps, alias)
                     print("done")
-                except tf.LookupException:
-                    print("Failed to lookup given frame '%s'" % (frame))
+                except Exception as e:
+                    print("Exception:", e)
             else:
                 print("No frame given.")
         elif cmd == "save-open-gripper" or cmd == "sog":
@@ -159,7 +163,7 @@ def main():
                 program.replace_frame(alias, new_frame)
             else:
                 print("Expected 2 arguments, got " + str(num_args))
-        elif cmd == "run-program":
+        elif cmd == "run-program" or cmd == "rp":
             program.run()
         elif cmd == "save-program":
             if len(args) == 2:

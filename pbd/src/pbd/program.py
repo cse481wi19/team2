@@ -3,12 +3,17 @@ import pickle
 import robot_api
 import tf
 import tf.transformations as tft
+import numpy as np
 
 from geometry_msgs.msg import PoseStamped
 from command import Command
 
 class Program(object):
-    def __init__(self):
+    def __init__(self, listener=None):
+        if listener is not None:
+            self.listener = listener
+        else:
+            self.listener = tf.TransformListener()
         self.commands = []
 
     def add_pose_command(self, ps, alias):
@@ -43,7 +48,6 @@ class Program(object):
         try:
             arm = robot_api.Arm()
             gripper = robot_api.Gripper()
-            listener = tf.TransformListener()
             rospy.sleep(1)
             for i, command in enumerate(self.commands):
                 print(i, str(command))
@@ -52,17 +56,19 @@ class Program(object):
                     ps = command.pose_stamped
                     curr_frame = command.pose_stamped.header.frame_id
                     if curr_frame != "base_link":
-                        listener.waitForTransform(
+                        self.listener.waitForTransform(
                             "base_link", curr_frame, rospy.Time(), rospy.Duration(4.0))
                         while not rospy.is_shutdown():
                             try:
-                                now = rospy.Time.now()
-                                listener.waitForTransform(
+                                # now = rospy.Time.now()
+                                now = rospy.Time(0)
+                                self.listener.waitForTransform(
                                     "base_link", curr_frame, now, rospy.Duration(4.0))
-                                (pos, rot) = listener.lookupTransform(
+                                (pos, rot) = self.listener.lookupTransform(
                                     "base_link", curr_frame, now)
                                 break
-                            except:
+                            except Exception as e:
+                                print("Exception: " + str(e))
                                 pass
                         base_T_frame_matrix = tft.quaternion_matrix(rot)
                         base_T_frame_matrix[0, 3] = pos[0]

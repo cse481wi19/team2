@@ -3,6 +3,7 @@
 # TODO: import ??????????_msgs.msg
 import sys
 import copy
+import random
 import rospy
 import actionlib
 import itertools
@@ -144,7 +145,7 @@ class Arm(object):
 
     def move_to_pose(self, 
                     pose_stamped,
-                    allowed_planning_time=10.0,
+                    allowed_planning_time=3.0,
                     execution_timeout=15.0,
                     group_name='arm',
                     gripper_frame='wrist_roll_link',
@@ -153,7 +154,7 @@ class Arm(object):
                     replan=False,
                     replan_attempts=5,
                     tolerance=0.01,
-                    max_acceleration_scaling_factor=0,
+                    max_acceleration_scaling_factor=1,
                     max_velocity_scaling_factor=0,
                     orientation_constraint=None):
         """Moves the end-effector to a pose, using motion planning.
@@ -181,33 +182,72 @@ class Arm(object):
         Returns:
             string describing the error if an error occurred, else None.
         """
+        res = None
+        for i in range(3):
+            # For retries, perturb the x, y, z values by
+            # a random amount
+            if i > 0:
+                pose_stamped.pose.position.x = pose_stamped.pose.position.x + (0.01 * random.randint(-1, 1))
+                pose_stamped.pose.position.y = pose_stamped.pose.position.y + (0.01 * random.randint(-1, 1))
+                pose_stamped.pose.position.z = pose_stamped.pose.position.z + (0.01 * random.randint(-1, 1))
 
-        goal_builder = MoveItGoalBuilder()
-        goal_builder.set_pose_goal(pose_stamped)
-        goal_builder.allowed_planning_time = allowed_planning_time
-        goal_builder.num_planning_attempts = num_planning_attempts
-        goal_builder.gripper_frame = gripper_frame
-        goal_builder.plan_only = plan_only
-        goal_builder.replan = replan
-        goal_builder.replan_attempts = replan_attempts
-        goal_builder.tolerance = tolerance
-        goal_builder.max_acceleration_scaling_factor = max_acceleration_scaling_factor
-        goal_builder.max_velocity_scaling_factor = max_velocity_scaling_factor
-        if orientation_constraint is not None:
-            goal_builder.add_path_orientation_constraint(orientation_constraint)
-        goal = goal_builder.build()
+            goal_builder = MoveItGoalBuilder()
+            goal_builder.set_pose_goal(pose_stamped)
+            goal_builder.allowed_planning_time = allowed_planning_time
+            goal_builder.num_planning_attempts = num_planning_attempts
+            goal_builder.gripper_frame = gripper_frame
+            goal_builder.plan_only = plan_only
+            goal_builder.replan = replan
+            goal_builder.replan_attempts = replan_attempts
+            goal_builder.tolerance = tolerance
+            goal_builder.max_acceleration_scaling_factor = max_acceleration_scaling_factor
+            goal_builder.max_velocity_scaling_factor = max_velocity_scaling_factor
+            if orientation_constraint is not None:
+                goal_builder.add_path_orientation_constraint(orientation_constraint)
+            goal = goal_builder.build()
 
-        self._mga_client.send_goal(goal)
-        self._mga_client.wait_for_result(rospy.Duration(execution_timeout))
-        result = self._mga_client.get_result()
-        if result is None:
-            return 'UNKNOWN_ERROR_CODE'
+            self._mga_client.send_goal(goal)
+            self._mga_client.wait_for_result(rospy.Duration(execution_timeout))
+            result = self._mga_client.get_result()
+            if result is not None:
+                msg = moveit_error_string(result.error_code.val)
+                if msg == "SUCCESS":
+                    res = msg
+                    break
+                else:
+                    print("Get non-successful error_code: " + msg)
+            else:
+                print("result was None")
 
-        msg = moveit_error_string(result.error_code.val)
-        if not (msg == "SUCCESS"):
-            return msg
-        else:
-            return None
+        return res
+
+
+        # goal_builder = MoveItGoalBuilder()
+        # goal_builder.set_pose_goal(pose_stamped)
+        # goal_builder.allowed_planning_time = allowed_planning_time
+        # goal_builder.num_planning_attempts = num_planning_attempts
+        # goal_builder.gripper_frame = gripper_frame
+        # goal_builder.plan_only = plan_only
+        # goal_builder.replan = replan
+        # goal_builder.replan_attempts = replan_attempts
+        # goal_builder.tolerance = tolerance
+        # goal_builder.max_acceleration_scaling_factor = max_acceleration_scaling_factor
+        # goal_builder.max_velocity_scaling_factor = max_velocity_scaling_factor
+        # if orientation_constraint is not None:
+        #     goal_builder.add_path_orientation_constraint(orientation_constraint)
+        # goal = goal_builder.build()
+
+        # self._mga_client.send_goal(goal)
+        # self._mga_client.wait_for_result(rospy.Duration(execution_timeout))
+        # result = self._mga_client.get_result()
+        # if result is None:
+        #     return 'UNKNOWN_ERROR_CODE'
+
+        # msg = moveit_error_string(result.error_code.val)
+        # if not (msg == "SUCCESS"):
+        #     return msg
+        # else:
+        #     return None
 
     def check_pose(self, 
                pose_stamped,
