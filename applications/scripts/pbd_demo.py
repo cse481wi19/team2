@@ -47,7 +47,15 @@ class ArTagReader(object):
         self.markers = []
 
     def callback(self, msg):
-        self.markers = msg.markers
+        # Filter to AR tag marker with ids of 0 or 15
+        # so literally only the microwave and the lunchbox we want
+        # to pick up.
+        # This is necessary because Fetch detects AR tags that don't
+        # exist with ids between 0 and 15 too (such as 3, 7, 9, etc.)
+        for m in msg.markers:
+            if m.id == 0 or m.id == 15:
+                self.markers.append(m)
+        # self.markers = msg.markers
     
     def get_available_tag_frames(self):
         tag_frames = []
