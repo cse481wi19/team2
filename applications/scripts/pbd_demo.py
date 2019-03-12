@@ -87,9 +87,11 @@ def main():
     sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, callback=reader.callback)
 
     controller_client = actionlib.SimpleActionClient('query_controller_states', QueryControllerStatesAction)
+    # arm = robot_api.Arm()
+    # gripper = robot_api.Gripper()
 
     print_intro()
-    program = Program(listener)
+    program = Program()
     print("Program created.")
     running = True
     while running:
@@ -164,14 +166,19 @@ def main():
             else:
                 print("Expected 2 arguments, got " + str(num_args))
         elif cmd == "run-program" or cmd == "rp":
-            program.run()
+            # program.run(listener, arm, gripper)
+            # program.run(listener)
+            program.run(None)
         elif cmd == "save-program":
             if len(args) == 2:
-                fp = args[1]
-                if program is None:
-                    print("There is no active program currently.")
-                else:
-                    program.save_program(fp)
+                try:
+                    fp = args[1]
+                    if program is None:
+                        print("There is no active program currently.")
+                    else:
+                        program.save_program(fp)
+                except Exception as e:
+                    print("Failed to save!\n", e)
             else:
                 print("No save path given.")
         elif cmd == "load-program":
@@ -180,7 +187,7 @@ def main():
                 if os.path.isfile(fp):
                     print("File " + fp + " exists. Loading...")
                     with open(fp, "rb") as load_file:
-                        program = pickle.load(load_file)
+                        program.commands = pickle.load(load_file)
                     print("Program loaded...")
                     program.print_program()
             else:

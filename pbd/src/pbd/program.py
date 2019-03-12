@@ -9,11 +9,7 @@ from geometry_msgs.msg import PoseStamped
 from command import Command
 
 class Program(object):
-    def __init__(self, listener=None):
-        if listener is not None:
-            self.listener = listener
-        else:
-            self.listener = tf.TransformListener()
+    def __init__(self):
         self.commands = []
 
     def add_pose_command(self, ps, alias):
@@ -28,7 +24,7 @@ class Program(object):
 
     def save_program(self, fp):
         with open(fp, "wb") as save_file:
-            pickle.dump(self, save_file)
+            pickle.dump(self.commands, save_file)
 
     def print_program(self):
         for i, command in enumerate(self.commands):
@@ -44,7 +40,9 @@ class Program(object):
         print("New program:")
         self.print_program()
 
-    def run(self):
+    def run(self, listener=None):
+        if listener is None:
+            listener = tf.TransformListener()
         try:
             arm = robot_api.Arm()
             gripper = robot_api.Gripper()
@@ -56,15 +54,15 @@ class Program(object):
                     ps = command.pose_stamped
                     curr_frame = command.pose_stamped.header.frame_id
                     if curr_frame != "base_link":
-                        self.listener.waitForTransform(
+                        listener.waitForTransform(
                             "base_link", curr_frame, rospy.Time(), rospy.Duration(4.0))
                         while not rospy.is_shutdown():
                             try:
                                 # now = rospy.Time.now()
                                 now = rospy.Time(0)
-                                self.listener.waitForTransform(
+                                listener.waitForTransform(
                                     "base_link", curr_frame, now, rospy.Duration(4.0))
-                                (pos, rot) = self.listener.lookupTransform(
+                                (pos, rot) = listener.lookupTransform(
                                     "base_link", curr_frame, now)
                                 break
                             except Exception as e:
