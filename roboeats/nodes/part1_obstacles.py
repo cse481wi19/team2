@@ -33,10 +33,10 @@ def main():
     # microwave_depth = 0.33
     microwave_depth = 0.27
     microwave_x = 0.97
-    microwave_floating_y = 0.06
+    microwave_z = 0.06
     microwave_y = 0.18 + microwave_floating_y
 
-    planning_scene.addBox('microwave', microwave_depth, microwave_width, microwave_height, microwave_x, microwave_y, table_height + microwave_height/2)
+    planning_scene.addBox('microwave', microwave_depth, microwave_width, microwave_height, microwave_x, microwave_y, table_height + microwave_z + microwave_height/2)
 
     rospy.sleep(2)
     rospy.spin()
