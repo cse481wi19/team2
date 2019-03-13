@@ -153,7 +153,7 @@ class Arm(object):
                     plan_only=False,
                     replan=False,
                     replan_attempts=5,
-                    tolerance=0.01,
+                    tolerance=0.004,
                     max_acceleration_scaling_factor=1,
                     max_velocity_scaling_factor=0,
                     orientation_constraint=None):

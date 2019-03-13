@@ -95,6 +95,7 @@ class Program(object):
                     res = arm.move_to_pose(ps)
                     if res is None:
                         print("Actually failed ------ T.T")
+                        raise Exception
                 elif command.type == Command.OPEN_GRIPPER:
                     gripper.open()
                 elif command.type == Command.CLOSE_GRIPPER:

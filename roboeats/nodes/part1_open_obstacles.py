@@ -30,9 +30,11 @@ def main():
 
     microwave_height = 0.28
     microwave_width = 0.48
-    microwave_depth = 0.33
+    microwave_depth = 0.27
     microwave_x = 0.97
-    microwave_y = 0.18
+    microwave_floating_y = 0.06
+    microwave_y = 0.18 + microwave_floating_y
+    
 
     microwave_side_height = 0.2
     microwave_r_width = 0.135
