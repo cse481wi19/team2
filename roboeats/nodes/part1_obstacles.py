@@ -34,7 +34,7 @@ def main():
     microwave_depth = 0.27
     microwave_x = 0.97
     microwave_z = 0.06
-    microwave_y = 0.18 + microwave_floating_y
+    microwave_y = 0.18
 
     planning_scene.addBox('microwave', microwave_depth, microwave_width, microwave_height, microwave_x, microwave_y, table_height + microwave_z + microwave_height/2)
 
