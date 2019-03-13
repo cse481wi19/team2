@@ -1,4 +1,5 @@
 import rospy
+import copy
 import pickle
 import robot_api
 import tf
@@ -51,6 +52,7 @@ class Program(object):
                 print(i, str(command))
                 if command.type == Command.POSE:
                     print(command.pose_stamped)
+                    # ps = copy.deepcopy(command.pose_stamped)
                     ps = command.pose_stamped
                     curr_frame = command.pose_stamped.header.frame_id
                     if curr_frame != "base_link":
