@@ -148,6 +148,7 @@ def main():
                         ps.pose.orientation.z = ans2[2]
                         ps.pose.orientation.w = ans2[3]
                         ps.header.frame_id = frame
+                    print("Saved pose:\n", ps)
                     program.add_pose_command(ps, alias)
                     print("done")
                 except Exception as e:
