@@ -8,11 +8,20 @@ import numpy as np
 import os
 import tf
 import tf.transformations as tft
+import tf2_ros
 
 from pbd import Command, Program
 from geometry_msgs.msg import PoseStamped
 from ar_track_alvar_msgs.msg import AlvarMarkers
 from robot_controllers_msgs.msg import QueryControllerStatesAction, QueryControllerStatesGoal, ControllerState
+
+def pos_rot_str(pos, rot):
+    return "pos: (%.3f, %.3f, %.3f), rot: (%.3f, %.3f, %.3f, %.3f)" % (pos[0], pos[1], pos[2], rot[0], rot[1], rot[2], rot[3])
+
+def ps_str(ps):
+    pos = ps.pose.position
+    rot = ps.pose.orientation
+    return "PoseStamped(pos: (%.3f, %.3f, %.3f), rot: (%.3f, %.3f, %.3f, %.3f), frame_id: %s)" % (pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w, ps.header.frame_id)
 
 def wait_for_time():                                              
     """Wait for simulated time to begin.                          
@@ -29,11 +38,11 @@ def print_commands():
     print("save-close-gripper|scg: save close gripper cmd in sequence")
     print("replace-frame|rf <alias> <new_frame>: replaces frames in poses with the given alias")
     print("run-program|rp: runs the current program sequence.")
-    print("save-program <file_path>: saves the program to the given file path.")
-    print("load-program <file_path>: loads the program from the given file path.")
+    print("savef <file_path>: saves the program to the given file path.")
+    print("loadf <file_path>: loads the program from the given file path.")
     print("print-program|ls|list: print the current program sequence")
-    print("arm-relax: relax the arm")
-    print("arm-unrelax: unrelaxes the arm")
+    print("relax: relax the arm")
+    print("unrelax: unrelaxes the arm")
     print("tags: print the available tag frames")
     print("stop: stops the demo")
     print("help: Show this list of commands")
@@ -55,7 +64,7 @@ class ArTagReader(object):
             # exist with ids between 0 and 15 too (such as 3, 7, 9, etc.)
             self.markers = []
             for m in msg.markers:
-                if m.id == 0 or m.id == 15:
+                # if m.id == 0 or m.id == 15:
                     self.markers.append(m)
             # self.markers = msg.markers
         except Exception as e:
@@ -77,6 +86,9 @@ def create_transform_matrix(transform):
     return matrix
 
 def main():
+    import sys
+    sys.stderr = open('err.txt', 'w')
+
     rospy.init_node("annotator_node")
     wait_for_time()
     
@@ -87,11 +99,11 @@ def main():
     sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, callback=reader.callback)
 
     controller_client = actionlib.SimpleActionClient('query_controller_states', QueryControllerStatesAction)
-    # arm = robot_api.Arm()
-    # gripper = robot_api.Gripper()
+    arm = robot_api.Arm()
+    gripper = robot_api.Gripper()
 
     print_intro()
-    program = Program()
+    program = Program(arm, gripper)
     print("Program created.")
     running = True
     while running:
@@ -116,7 +128,6 @@ def main():
                         frame = args[2]
                     if frame == "base_link":
                         (pos, rot) = listener.lookupTransform(frame, "wrist_roll_link", rospy.Time(0))
-                        print(str(pos), str(rot))
 
                         ps = PoseStamped()
                         ps.header.frame_id = frame
@@ -131,6 +142,7 @@ def main():
                     else:
                         transform = listener.lookupTransform(frame, "base_link", rospy.Time(0))
                         tag_T_base = create_transform_matrix(transform)
+                        print("stage 1: " + pos_rot_str(transform[0], transform[1]))
 
                         user_input = raw_input("saved base relative to the frame, move the arm and press enter when done")
                         transform = listener.lookupTransform("base_link", "wrist_roll_link", rospy.Time(0))
@@ -148,7 +160,7 @@ def main():
                         ps.pose.orientation.z = ans2[2]
                         ps.pose.orientation.w = ans2[3]
                         ps.header.frame_id = frame
-                    print("Saved pose:\n", ps)
+                    print("Saved pose: " + ps_str(ps))
                     program.add_pose_command(ps, alias)
                     print("done")
                 except Exception as e:
@@ -167,10 +179,8 @@ def main():
             else:
                 print("Expected 2 arguments, got " + str(num_args))
         elif cmd == "run-program" or cmd == "rp":
-            # program.run(listener, arm, gripper)
-            # program.run(listener)
             program.run(None)
-        elif cmd == "save-program":
+        elif cmd == "savef":
             if len(args) == 2:
                 try:
                     fp = args[1]
@@ -182,7 +192,7 @@ def main():
                     print("Failed to save!\n", e)
             else:
                 print("No save path given.")
-        elif cmd == "load-program":
+        elif cmd == "loadf":
             if len(args) == 2:
                 fp = args[1]
                 if os.path.isfile(fp):
@@ -195,7 +205,7 @@ def main():
                 print("No frame given.")
         elif cmd == "print-program" or cmd == "ls" or cmd == "list":
             program.print_program()
-        elif cmd == "arm-relax":
+        elif cmd == "relax":
             goal = QueryControllerStatesGoal()
             state = ControllerState()
             state.name = 'arm_controller/follow_joint_trajectory'
@@ -204,7 +214,7 @@ def main():
             controller_client.send_goal(goal)
             controller_client.wait_for_result()
             print("Arm is now relaxed.")
-        elif cmd == "arm-unrelax":
+        elif cmd == "unrelax":
             goal = QueryControllerStatesGoal()
             state = ControllerState()
             state.name = 'arm_controller/follow_joint_trajectory'
