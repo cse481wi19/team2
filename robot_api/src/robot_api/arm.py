@@ -26,6 +26,8 @@ from moveit_msgs.msg import MoveItErrorCodes, MoveGroupAction
 
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest
 
+ALLOWED_PLANNING_TIME = 6.0
+TOLERANCE = 0.004
 
 def moveit_error_string(val):
     """Returns a string associated with a MoveItErrorCode.
@@ -145,15 +147,15 @@ class Arm(object):
 
     def move_to_pose(self, 
                     pose_stamped,
-                    allowed_planning_time=3.0,
+                    allowed_planning_time=ALLOWED_PLANNING_TIME,
                     execution_timeout=15.0,
                     group_name='arm',
                     gripper_frame='wrist_roll_link',
-                    num_planning_attempts=1,
+                    num_planning_attempts=1,  ### I was thinking we could try to increase this
                     plan_only=False,
                     replan=False,
                     replan_attempts=5,
-                    tolerance=0.01,
+                    tolerance=TOLERANCE,
                     max_acceleration_scaling_factor=1,
                     max_velocity_scaling_factor=0,
                     orientation_constraint=None):
@@ -183,16 +185,19 @@ class Arm(object):
             string describing the error if an error occurred, else None.
         """
         res = None
-        for i in range(3):
+        # Try to move to the pose 3 times, perturbing the goal position slightly
+        # on tries after the first one
+        for i in range(1):
+            goal_pose_stamped = copy.deepcopy(pose_stamped)
             # For retries, perturb the x, y, z values by
             # a random amount
             if i > 0:
-                pose_stamped.pose.position.x = pose_stamped.pose.position.x + (0.01 * random.randint(-1, 1))
-                pose_stamped.pose.position.y = pose_stamped.pose.position.y + (0.01 * random.randint(-1, 1))
-                pose_stamped.pose.position.z = pose_stamped.pose.position.z + (0.01 * random.randint(-1, 1))
+                goal_pose_stamped.pose.position.x = pose_stamped.pose.position.x + (0.01 * random.randint(-1, 1))
+                goal_pose_stamped.pose.position.y = pose_stamped.pose.position.y + (0.01 * random.randint(-1, 1))
+                goal_pose_stamped.pose.position.z = pose_stamped.pose.position.z + (0.01 * random.randint(-1, 1))
 
             goal_builder = MoveItGoalBuilder()
-            goal_builder.set_pose_goal(pose_stamped)
+            goal_builder.set_pose_goal(goal_pose_stamped)
             goal_builder.allowed_planning_time = allowed_planning_time
             goal_builder.num_planning_attempts = num_planning_attempts
             goal_builder.gripper_frame = gripper_frame
@@ -216,6 +221,7 @@ class Arm(object):
                     break
                 else:
                     print("Get non-successful error_code: " + msg)
+                    res = None
             else:
                 print("result was None")
 
@@ -251,9 +257,9 @@ class Arm(object):
 
     def check_pose(self, 
                pose_stamped,
-               allowed_planning_time=10.0,
+               allowed_planning_time=ALLOWED_PLANNING_TIME,
                group_name='arm',
-               tolerance=0.01):
+               tolerance=TOLERANCE):
         return self.move_to_pose(
             pose_stamped,
             allowed_planning_time=allowed_planning_time,
