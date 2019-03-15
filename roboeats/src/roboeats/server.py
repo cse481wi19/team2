@@ -27,15 +27,6 @@ def wait_for_time():
 
 FOOD_ITEMS_TOPIC = "/roboeats/food_items"
 
-class FoodItem(object):
-    def __init__(self, name, description, id):
-        self.name = name
-        self.description = description
-        self.id = id
-    
-    def __str__(self):
-        return "FoodItem(name='%s', description='%s', id=%d)" % (self.name, self.description, self.id)
-
 class RoboEatsServer(object):
     DEFAULT_TORSO_HEIGHT = 0.4
 
@@ -60,9 +51,14 @@ class RoboEatsServer(object):
             rospy.loginfo("File doesn't exist.")
             self._food_items = {}
         self.__print_food_items__()
-
         self._save_file_path = save_file_path
         self.__pub_food_items__()
+
+        rospy.loginfo("initializing arm...")
+        self.arm = robot_api.Arm()
+
+        rospy.loginfo("initializing gripper...")
+        self.gripper = robot_api.Gripper()
 
         rospy.loginfo("Starting map annotator...")
         # We should expect the nav file given to contain the annotated positions:
@@ -100,7 +96,8 @@ class RoboEatsServer(object):
         Publishes the current list of food items to the FOOD_ITEMS_TOPIC topic.
         """
         food_items = FoodItems()
-        food_items.names, food_items.descriptions, food_items.ids = zip(*[(f.name, f.description, f.id) for f in self._food_items.values()])
+        if len(self._food_items) > 0:
+            food_items.names, food_items.descriptions, food_items.ids = zip(*[(f.name, f.description, f.id) for f in self._food_items.values()])
         self._food_items_pub.publish(food_items)
 
     def __food_list_modified__(self):
@@ -149,7 +146,8 @@ class RoboEatsServer(object):
         if os.path.isfile(program_fp):
             rospy.loginfo("File " + program_fp + " exists. Loading...")
             with open(program_fp, "rb") as load_file:
-                program = pickle.load(load_file)
+                program = Program(self.arm, self.gripper)
+                program.commands = pickle.load(load_file)
                 rospy.loginfo("Program loaded...")
                 ar_marker_frame = self.__food_id_to_ar_frame__(id)
                 rospy.loginfo("Program before changes:")
@@ -164,20 +162,54 @@ class RoboEatsServer(object):
             rospy.logerr("Program from given file path does not exist: " + program_fp)
             raise Exception
 
-    def start_segment1(self, id):
+    def start_segment1a(self, id):
+        """
+        (Segment 1)
+            0a. Move torso to default position
+            0b. reset head
+            0c. open gripper
+            0d. move arm to starting pos (start_pos.pkl)
+            1. (OMITTED) Move to start pose
+            2. Open microwave (p2.pkl)
+            2b. Move microwave lid (p2b.pkl)
+            3. Grab lunchbox
+            4. Put it into microwave
+            5. Close microwave
+        """
         rospy.loginfo("STARTING SEGMENT 1")
-        rospy.loginfo("0. Adjust torso height")
+        rospy.loginfo("0a. Move torso to default position")
         torso = robot_api.Torso()
-        torso.set_height(self.DEFAULT_TORSO_HEIGHT)
+        torso.set_height(0.4)
         rospy.sleep(2)
 
-        rospy.loginfo("1. Move to start pose")
-        self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
+        rospy.loginfo("0b. reset head")
+        head = robot_api.Head()
+        head.pan_tilt(-0.1, 0.57)
         rospy.sleep(2)
+
+        rospy.loginfo("0c. open gripper")
+        self.gripper.open()
+
+        rospy.loginfo("0d. Move arm to starting pos")
+        self.__load_program_and_run__("start_pos.pkl", id)
+        rospy.sleep(1.5)
+
+        # rospy.loginfo("1. Move to start pose")
+        # self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
+        # rospy.sleep(2)
 
         rospy.loginfo("2. Open microwave")
-        self.__load_program_and_run__("pbd2.pkl", id)
+        self.__load_program_and_run__("p2.pkl", id)
+        rospy.sleep(1.5)
 
+        rospy.loginfo("2b. Move microwave lid")
+        self.__load_program_and_run__("p2b.pkl", id)
+        rospy.sleep(1.5)
+
+        rospy.loginfo("FINISHED SEGMENT 1a")
+
+    def start_segment1b(self, id):
+        rospy.loginfo("STARTING SEGMENT 1b")
         rospy.loginfo("3. Grab lunchbox")
         self.__load_program_and_run__("pbd1.pkl", id)
 
@@ -186,9 +218,16 @@ class RoboEatsServer(object):
  
         rospy.loginfo("5. Close microwave")
         self.__load_program_and_run__("pbd4.pkl", id)
-        rospy.loginfo("FINISHED SEGMENT 1")
+        rospy.loginfo("FINISHED SEGMENT 1b")
 
     def start_segment2(self, id):
+        """
+        (Segment 2)
+            6. Enter time (1 min)
+            7. Start microwave
+            8. Wait for food to finish microwaving
+            9. Wait for cooldown
+        """
         rospy.loginfo("STARTING SEGMENT 2")
         rospy.loginfo("6. Enter time(1 min)")
         self.__load_program_and_run__("pbd5.pkl", id)
@@ -204,6 +243,13 @@ class RoboEatsServer(object):
         rospy.loginfo("FINISHED SEGMENT 2")
 
     def start_segment3(self, id):
+        """
+        (Segment 3)
+            10. Open microwave
+            11. Grab lunchbox
+            12. Move to dropoff pose
+            13. Put down lunchbox
+        """
         rospy.loginfo("STARTING SEGMENT 3")
         rospy.loginfo("10. Open microwave")
         self.__load_program_and_run__("pbd2.pkl", id)
@@ -220,6 +266,11 @@ class RoboEatsServer(object):
         rospy.loginfo("FINISHED SEGMENT 3")
 
     def start_segment4(self, id):
+        """
+        (Segment 4)
+            14. Move to start pose
+            15. Close microwave
+        """
         rospy.loginfo("STARTING SEGMENT 4")
         rospy.loginfo("14. Move to start pose")
         self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
@@ -235,33 +286,13 @@ class RoboEatsServer(object):
 
         Starts the entire food sequence and removes the food item from the dictionary after it has been finished.
 
-        Sequence:
-
-        (Segment 1)
-            0. Move torso to default position
-            1. Move to start pose
-            2. Open microwave
-            3. Grab lunchbox
-            4. Put it into microwave
-            5. Close microwave
-        (Segment 2)
-            6. Enter time (1 min)
-            7. Start microwave
-            8. Wait for food to finish microwaving
-            9. Wait for cooldown
-        (Segment 3)
-            10. Open microwave
-            11. Grab lunchbox
-            12. Move to dropoff pose
-            13. Put down lunchbox
-        (Segment 4)
-            14. Move to start pose
-            15. Close microwave
         """
         id = request.id
         rospy.loginfo("Starting sequence for food item: " + str(self._food_items[id]))
 
-        self.start_segment1(id)
+        self.start_segment1a(id)
+        
+        self.start_segment1b(id)
 
         self.start_segment2(id)
 
@@ -289,6 +320,8 @@ def main():
     start_sequence_service = rospy.Service('roboeats/start_sequence', StartSequence,
                                              server.handle_start_sequence)
     rospy.loginfo("roboeats_server: running...")
+
+    server.start_segment1(1)
     rospy.spin()
 
 

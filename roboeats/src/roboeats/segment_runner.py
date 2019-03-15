@@ -3,6 +3,8 @@
 import rospy
 
 from map_annotator import Annotator
+from server import RoboEatsServer
+from food_item import FoodItem
 
 def wait_for_time():                                              
     """Wait for simulated time to begin.                          
@@ -18,7 +20,7 @@ def main():
 
     server = RoboEatsServer()
 
-    server.start_segment1(id)
+    server.start_segment1a(id)
 #     server.start_segment2(id)
 #     server.start_segment3(id)
 #     server.start_segment4(id)

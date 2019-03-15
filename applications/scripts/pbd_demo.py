@@ -16,12 +16,12 @@ from ar_track_alvar_msgs.msg import AlvarMarkers
 from robot_controllers_msgs.msg import QueryControllerStatesAction, QueryControllerStatesGoal, ControllerState
 
 def pos_rot_str(pos, rot):
-    return "pos: (%.3f, %.3f, %.3f), rot: (%.3f, %.3f, %.3f, %.3f)" % (pos[0], pos[1], pos[2], rot[0], rot[1], rot[2], rot[3])
+    return "pos: (%.5f, %.5f, %.5f), rot: (%.5f, %.5f, %.5f, %.5f)" % (pos[0], pos[1], pos[2], rot[0], rot[1], rot[2], rot[3])
 
 def ps_str(ps):
     pos = ps.pose.position
     rot = ps.pose.orientation
-    return "PoseStamped(pos: (%.3f, %.3f, %.3f), rot: (%.3f, %.3f, %.3f, %.3f), frame_id: %s)" % (pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w, ps.header.frame_id)
+    return "PoseStamped(pos: (%.5f, %.5f, %.5f), rot: (%.5f, %.5f, %.5f, %.5f), frame_id: %s)" % (pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w, ps.header.frame_id)
 
 def wait_for_time():                                              
     """Wait for simulated time to begin.                          
@@ -36,6 +36,7 @@ def print_commands():
     print("save-pose|sp <alias> <frame>: saves the current pose relative to the given frame with an alias. <frame> can either be relative to the base or the tag.")
     print("save-open-gripper|sog: save open gripper cmd in sequence")
     print("save-close-gripper|scg: save close gripper cmd in sequence")
+    print("delete|d: deletes the last saved command")
     print("replace-frame|rf <alias> <new_frame>: replaces frames in poses with the given alias")
     print("run-program|rp: runs the current program sequence.")
     print("savef <file_path>: saves the program to the given file path.")
@@ -65,7 +66,7 @@ class ArTagReader(object):
             self.markers = []
             for m in msg.markers:
                 # if m.id == 0 or m.id == 15:
-                    self.markers.append(m)
+                self.markers.append(m)
             # self.markers = msg.markers
         except Exception as e:
             print("GOT EXCEPTISDOAUFHUASJFSADf?!@?#!@?!@?#!@?#!@")
@@ -86,14 +87,15 @@ def create_transform_matrix(transform):
     return matrix
 
 def main():
-    import sys
-    sys.stderr = open('err.txt', 'w')
-
     rospy.init_node("annotator_node")
+    print("starting node")
     wait_for_time()
+    print("finished node")
     
+    print("starting node 2")
     listener = tf.TransformListener()
     rospy.sleep(1)
+    print("finished node 2")
 
     reader = ArTagReader()
     sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, callback=reader.callback)
@@ -115,7 +117,7 @@ def main():
         cmd = args[0]
         num_args = len(args) - 1
         if cmd == "create":
-            program = Program()
+            program.reset()
             print("Program created.")
         elif cmd == "save-pose" or cmd == "sp":
             if num_args >= 1:
@@ -140,12 +142,21 @@ def main():
                         ps.pose.orientation.z = rot[2]
                         ps.pose.orientation.w = rot[3]
                     else:
+                        # while True:
                         transform = listener.lookupTransform(frame, "base_link", rospy.Time(0))
-                        tag_T_base = create_transform_matrix(transform)
+                        rot = transform[1]
+                        x, y, z, w = rot
                         print("stage 1: " + pos_rot_str(transform[0], transform[1]))
-
+                            # if frame == "ar_marker_17" and x < 0 and y < 0 and z > 0 and w < 0:
+                            #     break
+                            # elif frame == "ar_marker_14" and x < 0 and y < 0 and z < 0 and w < 0:
+                            #     break
+                            # else:
+                            #     break
+                        tag_T_base = create_transform_matrix(transform)
                         user_input = raw_input("saved base relative to the frame, move the arm and press enter when done")
                         transform = listener.lookupTransform("base_link", "wrist_roll_link", rospy.Time(0))
+                        print("stage 2: " + pos_rot_str(transform[0], transform[1]))
                         base_T_gripper = create_transform_matrix(transform)
                         
                         ans = np.dot(tag_T_base, base_T_gripper)
@@ -171,6 +182,8 @@ def main():
             program.add_open_gripper_command()
         elif cmd == "save-close-gripper" or cmd == "scg":
             program.add_close_gripper_command()
+        elif cmd == "delete" or cmd == "d":
+            program.delete_last_command()
         elif cmd == "replace-frame" or cmd == "rf":
             if num_args == 2:
                 alias = args[1]
