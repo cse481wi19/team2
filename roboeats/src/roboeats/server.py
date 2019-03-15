@@ -287,6 +287,8 @@ class RoboEatsServer(object):
             5. Close microwave (p4a.pkl, p4b.pkl) <- needs to be split so we can change planning scenes
 
         """
+        self.start_obstacles_2()
+        
         rospy.loginfo("STARTING SEGMENT 1b")
         rospy.loginfo("3. Grab lunchbox")
         self.__load_program_and_run__("p1.pkl", id)
@@ -298,7 +300,7 @@ class RoboEatsServer(object):
         self.__load_program_and_run__("p4a.pkl", id)
 
         rospy.loginfo("5b. Changing obstacles...")
-        self.start_obstacles_2()
+        self.start_obstacles_1()
 
         rospy.loginfo("5b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
