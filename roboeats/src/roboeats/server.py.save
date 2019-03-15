@@ -256,9 +256,9 @@ class RoboEatsServer(object):
     def attach_lunchbox(self):
         frame_attached_to = 'gripper_link'
         frames_okay_collide_with = ['gripper_link', 'l_gripper_finger_link', 'r_gripper_finger_link']
-        lunchbox_x_offset = 0.1
+        lunchbox_x_offset =
 
-        self.planning_scene.attachBox("lunchbox", 0.16, 0.16, 0.1, lunchbox_x_offset, 0, 0, frame_attached_to, frames_okay_collide_with)
+        self.planning_scene.attachBox("lunchbox", 0.16, 0.16, 0.1, lunchbox_x_offset, 0, lunchbox_z_offset, frame_attached_to, frames_okay_collide_with)
 
     def remove_lunchbox(self):
         self.planning_scene.removeAttachedObject('lunchbox')

@@ -20,7 +20,7 @@ def main():
 
     server = RoboEatsServer()
 
-    server.start_segment1a(id)
+#    server.start_segment1a(id)
     server.start_segment1b(id)
 #     server.start_segment2(id)
 #     server.start_segment3(id)

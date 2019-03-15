@@ -64,6 +64,11 @@ class Program(object):
                       (i, old_frame, new_frame))
         print("New program:")
         self.print_program()
+    def wiggle_head(self):
+	head = robot_api.Head()
+	head.pan_tilt(-0.1, 0)
+	rospy.sleep(2)
+	head.pan_tilt(-0.1, 0.57)	
 
     def run(self, listener=None):
         if listener is None:
@@ -139,6 +144,8 @@ class Program(object):
                         # If moving was successful, break
                         if res is None:
                             print("Iteration", i, "failed.")
+			    self.wiggle_head()
+			    rospy.sleep(1.5)
                             if i == 2:
                                 raise Exception("FAILED")
                         else:
