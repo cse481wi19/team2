@@ -104,9 +104,13 @@ class Arm(object):
             FollowJointTrajectoryAction)
         # TODO: Wait for server
         self._client.wait_for_server()
+        print('got server')
 
         self._mga_client = actionlib.SimpleActionClient("move_group", MoveGroupAction)
+        print('got move_group1')
         self._mga_client.wait_for_server()
+        print('got move_group2')
+        
 
         self._compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
         pass

@@ -46,6 +46,8 @@ def print_commands():
     print("unrelax: unrelaxes the arm")
     print("tags: print the available tag frames")
     print("stop: stops the demo")
+    print("torso <height>: moves the torso to the specified height")
+    print("head <pan> <tilt>: moves the head to the specified pan and tilt values")
     print("help: Show this list of commands")
 
 def print_intro():
@@ -86,6 +88,16 @@ def create_transform_matrix(transform):
     matrix[2, 3] = pos[2]
     return matrix
 
+def relax_arm(controller_client):
+    goal = QueryControllerStatesGoal()
+    state = ControllerState()
+    state.name = 'arm_controller/follow_joint_trajectory'
+    state.state = ControllerState.STOPPED
+    goal.updates.append(state)
+    controller_client.send_goal(goal)
+    controller_client.wait_for_result()
+    print("Arm is now relaxed.")
+
 def main():
     rospy.init_node("annotator_node")
     print("starting node")
@@ -99,10 +111,18 @@ def main():
 
     reader = ArTagReader()
     sub = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, callback=reader.callback)
+    print('finished subscribing to ARTag reader')
 
     controller_client = actionlib.SimpleActionClient('query_controller_states', QueryControllerStatesAction)
+    print('passed action lib')
     arm = robot_api.Arm()
+    print('got arm')
     gripper = robot_api.Gripper()
+    print('got gripper')
+    torso = robot_api.Torso()
+    print('got torso')
+    head = robot_api.Head()
+    print('got head')
 
     print_intro()
     program = Program(arm, gripper)
@@ -180,8 +200,10 @@ def main():
                 print("No frame given.")
         elif cmd == "save-open-gripper" or cmd == "sog":
             program.add_open_gripper_command()
+            gripper.open()
         elif cmd == "save-close-gripper" or cmd == "scg":
             program.add_close_gripper_command()
+            gripper.close()
         elif cmd == "delete" or cmd == "d":
             program.delete_last_command()
         elif cmd == "replace-frame" or cmd == "rf":
@@ -193,6 +215,7 @@ def main():
                 print("Expected 2 arguments, got " + str(num_args))
         elif cmd == "run-program" or cmd == "rp":
             program.run(None)
+            relax_arm(controller_client)
         elif cmd == "savef":
             if len(args) == 2:
                 try:
@@ -219,14 +242,7 @@ def main():
         elif cmd == "print-program" or cmd == "ls" or cmd == "list":
             program.print_program()
         elif cmd == "relax":
-            goal = QueryControllerStatesGoal()
-            state = ControllerState()
-            state.name = 'arm_controller/follow_joint_trajectory'
-            state.state = ControllerState.STOPPED
-            goal.updates.append(state)
-            controller_client.send_goal(goal)
-            controller_client.wait_for_result()
-            print("Arm is now relaxed.")
+            relax_arm(controller_client)
         elif cmd == "unrelax":
             goal = QueryControllerStatesGoal()
             state = ControllerState()
@@ -243,6 +259,21 @@ def main():
             print_commands()
         elif cmd == "stop":
             running = False
+        elif cmd == "torso":
+            if num_args == 1:
+                height = float(args[1])
+                torso.set_height(height)
+                program.add_set_height_command(height)
+            else:
+                print("missing <height>")
+        elif cmd == "head":
+            if num_args == 2:
+                pan = float(args[1])
+                tilt = float(args[2])
+                head.pan_tilt(pan, tilt)
+                program.add_set_pan_tilt_command(pan, tilt)
+            else:
+                print("missing <pan> <tilt>")
         else:
             print("NO SUCH COMMAND: " + cmd)
         print("")

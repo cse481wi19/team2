@@ -36,6 +36,12 @@ class Program(object):
 
     def add_close_gripper_command(self):
         self.commands.append(Command(Command.CLOSE_GRIPPER))
+
+    def add_set_height_command(self, height):
+        self.commands.append(Command(Command.SET_HEIGHT, height=height))
+
+    def add_set_pan_tilt_command(self, pan, tilt):
+        self.commands.append(Command(Command.SET_PAN_TILT, pan=pan, tilt=tilt))
     
     def delete_last_command(self):
         if len(self.commands) > 0:
@@ -133,6 +139,8 @@ class Program(object):
                         # If moving was successful, break
                         if res is None:
                             print("Iteration", i, "failed.")
+                            if i == 2:
+                                raise Exception("FAILED")
                         else:
                             print("Iteration", i, "successful.")
                             break
