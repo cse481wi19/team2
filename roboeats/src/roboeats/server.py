@@ -263,6 +263,8 @@ class RoboEatsServer(object):
         rospy.loginfo("0. Initialize robot")
         self.init_robot()
 
+        self.start_obstacles_2()
+
         # rospy.loginfo("1. Move to start pose")
         # self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
         # rospy.sleep(2)
@@ -292,11 +294,13 @@ class RoboEatsServer(object):
         rospy.loginfo("4. Put it into microwave")
         self.__load_program_and_run__("p3.pkl", id)
  
-        rospy.loginfo("5. Close microwave")
+        rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
 
+        rospy.loginfo("5b. Changing obstacles...")
+        self.start_obstacles_2()
 
-
+        rospy.loginfo("5b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
         rospy.loginfo("FINISHED SEGMENT 1b")
 
