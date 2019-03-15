@@ -288,22 +288,28 @@ class RoboEatsServer(object):
 
         """
         self.start_obstacles_2()
-        
+
         rospy.loginfo("STARTING SEGMENT 1b")
         rospy.loginfo("3. Grab lunchbox")
         self.__load_program_and_run__("p1.pkl", id)
+        rospy.sleep(1.5)
 
         rospy.loginfo("4. Put it into microwave")
         self.__load_program_and_run__("p3.pkl", id)
+        rospy.sleep(1.5)
  
         rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
+        rospy.sleep(1.5)
+
 
         rospy.loginfo("5b. Changing obstacles...")
         self.start_obstacles_1()
+        rospy.sleep(2)
 
         rospy.loginfo("5b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
+        rospy.sleep(1.5)
         rospy.loginfo("FINISHED SEGMENT 1b")
 
     def start_segment2(self, id):
