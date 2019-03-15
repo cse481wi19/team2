@@ -11,6 +11,7 @@
   <depend>joint_state_reader</depend>
   <depend>map_annotator</depend>
   <depend>pbd</depend>
+  <depend>roboeats</depend>
   <export>
   </export>
 </package>

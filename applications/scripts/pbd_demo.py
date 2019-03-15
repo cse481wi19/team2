@@ -10,6 +10,7 @@ import tf
 import tf.transformations as tft
 import tf2_ros
 
+from roboeats import RoboEatsServer, FoodItem
 from pbd import Command, Program
 from geometry_msgs.msg import PoseStamped
 from ar_track_alvar_msgs.msg import AlvarMarkers
@@ -48,6 +49,11 @@ def print_commands():
     print("stop: stops the demo")
     print("torso <height>: moves the torso to the specified height")
     print("head <pan> <tilt>: moves the head to the specified pan and tilt values")
+    print(" ")
+    print("======ROBOEATS SERVER COMMANDS=====")
+    print("init: initializes the robot")
+    print("attachl: attaches lunchbox obstacle")
+    print("detachl: detaches lunchbox obstacle")
     print("help: Show this list of commands")
 
 def print_intro():
@@ -123,6 +129,8 @@ def main():
     print('got torso')
     head = robot_api.Head()
     print('got head')
+
+    server = RoboEatsServer()
 
     print_intro()
     program = Program(arm, gripper)
@@ -262,7 +270,6 @@ def main():
         elif cmd == "torso":
             if num_args == 1:
                 height = float(args[1])
-                torso.set_height(height)
                 program.add_set_height_command(height)
             else:
                 print("missing <height>")
@@ -274,6 +281,12 @@ def main():
                 program.add_set_pan_tilt_command(pan, tilt)
             else:
                 print("missing <pan> <tilt>")
+        elif cmd == "init":
+            server.init_robot()
+        elif cmd == "attachl":
+            server.attach_lunchbox()
+        elif cmd == "detachl":
+            server.remove_lunchbox()
         else:
             print("NO SUCH COMMAND: " + cmd)
         print("")
