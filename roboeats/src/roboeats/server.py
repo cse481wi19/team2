@@ -251,13 +251,15 @@ class RoboEatsServer(object):
         self.planning_scene.addBox('microwave_back', microwave_back_depth, microwave_width, microwave_height, microwave_back_x, microwave_y, table_height + microwave_z + microwave_height/2)
         self.planning_scene.addBox('microwave_door', 0.39, microwave_door_width, microwave_height + 0.01, microwave_door_x, microwave_door_y, table_height + microwave_z + microwave_height/2 + 0.005)
 
+    def attach_lunchbox():
         frame_attached_to = 'gripper_link'
         frames_okay_collide_with = ['gripper_link', 'l_gripper_finger_link', 'r_gripper_finger_link']
-        lunchbox_x_offset = 0
+        lunchbox_x_offset = 0.06
 
-        # Attach the lunchbox
         self.planning_scene.attachBox("lunchbox", 0.16, 0.16, 0.1, lunchbox_x_offset, 0, 0, frame_attached_to, frames_okay_collide_with)
 
+    def remove_lunchbox():
+        self.planning_scene.removeAttachedObject('lunchbox')
 
     def start_segment1a(self, id):
         """
@@ -301,9 +303,13 @@ class RoboEatsServer(object):
         self.__load_program_and_run__("p1.pkl", id)
         rospy.sleep(1.5)
 
+        self.attach_lunchbox()
+
         rospy.loginfo("4. Put it into microwave")
         self.__load_program_and_run__("p3.pkl", id)
         rospy.sleep(1.5)
+
+        self.remove_lunchbox()
  
         rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
@@ -356,9 +362,13 @@ class RoboEatsServer(object):
         rospy.loginfo("11. Grab lunchbox")
         self.__load_program_and_run__("pbd1.pkl", id)
 
+        self.attach_lunchbox()
+
         rospy.loginfo("12. Move to dropoff pose")
         self._map_annotator.goto_position(self.DROPOFF_LOCATION_NAME)
         rospy.sleep(2)
+
+        self.remove_lunchbox()
 
         rospy.loginfo("13. Put down lunchbox")
         self.__load_program_and_run__("pbd7.pkl", id)
