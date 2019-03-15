@@ -10,6 +10,7 @@ import tf.transformations as tft
 
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
 
+from moveit_python import PlanningSceneInterface
 from map_annotator import Annotator
 from pbd import Program, Command
 
@@ -59,6 +60,9 @@ class RoboEatsServer(object):
 
         rospy.loginfo("initializing gripper...")
         self.gripper = robot_api.Gripper()
+
+        rospy.loginfo("initializing planning scene...")
+        self.planning_scene = PlanningSceneInterface('base_link')
 
         rospy.loginfo("Starting map annotator...")
         # We should expect the nav file given to contain the annotated positions:
@@ -162,19 +166,12 @@ class RoboEatsServer(object):
             rospy.logerr("Program from given file path does not exist: " + program_fp)
             raise Exception
 
-    def start_segment1a(self, id):
+    def init_robot(self):
         """
-        (Segment 1)
             0a. Move torso to default position
             0b. reset head
             0c. open gripper
             0d. move arm to starting pos (start_pos.pkl)
-            1. (OMITTED) Move to start pose
-            2. Open microwave (p2.pkl)
-            2b. Move microwave lid (p2b.pkl)
-            3. Grab lunchbox
-            4. Put it into microwave
-            5. Close microwave
         """
         rospy.loginfo("STARTING SEGMENT 1")
         rospy.loginfo("0a. Move torso to default position")
@@ -194,6 +191,78 @@ class RoboEatsServer(object):
         self.__load_program_and_run__("start_pos.pkl", id)
         rospy.sleep(1.5)
 
+    def start_obstacles_1(self):
+        self.planning_scene.clear()
+        self.planning_scene.removeCollisionObject('table')
+        self.planning_scene.removeCollisionObject('floor')
+        self.planning_scene.addBox('floor', 2, 2, 0.01, 0, 0, 0.01/2)
+        table_height = 0.767
+        table_width = 0.7
+        table_x = 0.95
+        self.planning_scene.addBox('table', table_width, 2, table_height, table_x, 0, table_height/2)
+        self.planning_scene.addBox('robot_base', 0.54, 0.52, 0.37, 0, 0, 0.37/2)
+
+        microwave_height = 0.28
+        microwave_width = 0.48
+        # microwave_depth = 0.33
+        microwave_depth = 0.27
+        microwave_x = 0.97
+        microwave_z = 0.06
+        microwave_y = 0.18
+        self.planning_scene.addBox('microwave', microwave_depth, microwave_width, microwave_height, microwave_x, microwave_y, table_height + microwave_z + microwave_height/2)
+    
+    def start_obstacles_2(self):
+        self.planning_scene.clear()
+        self.planning_scene.removeCollisionObject('table')
+        self.planning_scene.removeCollisionObject('floor')
+        self.planning_scene.addBox('floor', 2, 2, 0.01, 0, 0, 0.01/2)
+        table_height = 0.767
+        table_width = 0.7
+        table_x = 0.95
+        self.planning_scene.addBox('table', table_width, 2, table_height, table_x, 0, table_height/2)
+        self.planning_scene.addBox('robot_base', 0.54, 0.52, 0.37, 0, 0, 0.37/2)
+
+        microwave_height = 0.28
+        microwave_width = 0.48
+        microwave_depth = 0.27
+        microwave_x = 0.97    
+        microwave_y = 0.18
+        microwave_z = 0.06
+        
+
+        microwave_side_height = 0.2
+        microwave_r_width = 0.135
+        microwave_r_y = microwave_y - 0.175
+        microwave_l_width = 0.035
+        microwave_l_y = microwave_y + 0.222
+        microwave_bottom_height = 0.05
+        microwave_top_height = 0.04
+        microwave_back_depth = 0.03
+        microwave_back_x = table_x + (microwave_depth / 2) + (microwave_back_depth/2)
+        microwave_door_width = 0.09
+        microwave_door_x = microwave_x - 0.33
+        microwave_door_y = microwave_l_y + 0.027
+
+
+        self.planning_scene.addBox('microwave_top', microwave_depth, microwave_width, microwave_top_height, microwave_x, microwave_y, table_height + microwave_z + microwave_bottom_height + microwave_side_height + (microwave_top_height/2))
+        self.planning_scene.addBox('microwave_bottom', microwave_depth, microwave_width, microwave_bottom_height, microwave_x, microwave_y, table_height + microwave_z + (microwave_bottom_height/2))
+        self.planning_scene.addBox('microwave_side_r', microwave_depth, microwave_r_width, microwave_side_height, microwave_x, microwave_r_y, table_height + microwave_z + microwave_bottom_height + (microwave_side_height/2))
+        self.planning_scene.addBox('microwave_side_l', microwave_depth, microwave_l_width, microwave_side_height, microwave_x, microwave_l_y, table_height + microwave_z + microwave_bottom_height +  microwave_side_height/2)
+        self.planning_scene.addBox('microwave_back', microwave_back_depth, microwave_width, microwave_height, microwave_back_x, microwave_y, table_height + microwave_z + microwave_height/2)
+        self.planning_scene.addBox('microwave_door', 0.39, microwave_door_width, microwave_height + 0.01, microwave_door_x, microwave_door_y, table_height + microwave_z + microwave_height/2 + 0.005)
+
+
+    def start_segment1a(self, id):
+        """
+        (Segment 1a)
+            0. Initialize robot
+            1. (OMITTED) Move to start pose
+            2. Open microwave (p2.pkl)
+            2b. Move microwave lid (p2b.pkl)
+        """
+        rospy.loginfo("0. Initialize robot")
+        self.init_robot()
+
         # rospy.loginfo("1. Move to start pose")
         # self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
         # rospy.sleep(2)
@@ -209,15 +278,26 @@ class RoboEatsServer(object):
         rospy.loginfo("FINISHED SEGMENT 1a")
 
     def start_segment1b(self, id):
+        """
+        (Segment 1b)
+            3. Grab lunchbox (p1.pkl)
+            4. Put it into microwave (p3.pkl)
+            5. Close microwave (p4a.pkl, p4b.pkl) <- needs to be split so we can change planning scenes
+
+        """
         rospy.loginfo("STARTING SEGMENT 1b")
         rospy.loginfo("3. Grab lunchbox")
-        self.__load_program_and_run__("pbd1.pkl", id)
+        self.__load_program_and_run__("p1.pkl", id)
 
         rospy.loginfo("4. Put it into microwave")
-        self.__load_program_and_run__("pbd3.pkl", id)
+        self.__load_program_and_run__("p3.pkl", id)
  
         rospy.loginfo("5. Close microwave")
-        self.__load_program_and_run__("pbd4.pkl", id)
+        self.__load_program_and_run__("p4a.pkl", id)
+
+
+
+        self.__load_program_and_run__("p4b.pkl", id)
         rospy.loginfo("FINISHED SEGMENT 1b")
 
     def start_segment2(self, id):

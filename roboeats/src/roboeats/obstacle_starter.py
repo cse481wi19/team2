@@ -13,18 +13,14 @@ def wait_for_time():
         pass
 
 def main():
-    rospy.init_node("segment_runner")
+    rospy.init_node("obstacle_starter")
     wait_for_time()
-
-    id = 12
 
     server = RoboEatsServer()
 
-    server.start_segment1a(id)
-    server.start_segment1b(id)
-#     server.start_segment2(id)
-#     server.start_segment3(id)
-#     server.start_segment4(id)
+    server.start_obstacles_2()
+
+    rospy.spin()
 
 
 if __name__ == '__main__':

@@ -19,12 +19,7 @@ def main():
     id = 12
 
     server = RoboEatsServer()
-
-    server.start_segment1a(id)
-    server.start_segment1b(id)
-#     server.start_segment2(id)
-#     server.start_segment3(id)
-#     server.start_segment4(id)
+    server.init_robot()
 
 
 if __name__ == '__main__':
