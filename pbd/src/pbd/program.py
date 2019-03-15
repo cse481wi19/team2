@@ -87,70 +87,66 @@ class Program(object):
                     # Retries using move_to_pose only
                     # # Attempt to move to the pose 3 times
                     for i in range(3):
-                        print("In program.py retry loop, i=" + str(i))
-                        if frame != "base_link":
-                            # while True:
-                            listener.waitForTransform(
-                                "base_link", frame, rospy.Time(), rospy.Duration(4.0))
-                            while not rospy.is_shutdown():
-                                try:
-                                    # now = rospy.Time.now()
-                                    now = rospy.Time(0)
-                                    listener.waitForTransform(
-                                        "base_link", frame, now, rospy.Duration(4.0))
-                                    pos, rot = listener.lookupTransform(
-                                        "base_link", frame, now)
-                                    print("Got transform: " + pos_rot_str(pos, rot))
-                                    break
-                                except Exception as e:
-                                    print("Exception: " + str(e))
-                                    pass
-                                # x, y, z, w = rot
-                                # # if frame == "ar_marker_17" and x < 0 and y < 0 and z > 0 and w < 0:
-                                # #                             #    x > 0 and y > 0 and z < 0 and w > 0:
-                                # #     break
-                                # if frame == "ar_marker_14" and x > 0 and y > 0 and z > 0 and w < 0:
-                                #     break
-                            base_T_frame_matrix = tft.quaternion_matrix(rot)
-                            base_T_frame_matrix[0, 3] = pos[0]
-                            base_T_frame_matrix[1, 3] = pos[1]
-                            base_T_frame_matrix[2, 3] = pos[2]
+                        try:
+                            print("In program.py retry loop, i=" + str(i))
+                            if frame != "base_link":
+                                listener.waitForTransform(
+                                    "base_link", frame, rospy.Time(), rospy.Duration(4.0))
+                                while not rospy.is_shutdown():
+                                    try:
+                                        # now = rospy.Time.now()
+                                        now = rospy.Time(0)
+                                        listener.waitForTransform(
+                                            "base_link", frame, now, rospy.Duration(4.0))
+                                        pos, rot = listener.lookupTransform(
+                                            "base_link", frame, now)
+                                        print("Got transform: " + pos_rot_str(pos, rot))
+                                        break
+                                    except Exception as e:
+                                        print("Exception: " + str(e))
+                                        pass
+                                base_T_frame_matrix = tft.quaternion_matrix(rot)
+                                base_T_frame_matrix[0, 3] = pos[0]
+                                base_T_frame_matrix[1, 3] = pos[1]
+                                base_T_frame_matrix[2, 3] = pos[2]
 
-                            ori = ps.pose.orientation
-                            frame_T_gripper_matrix = tft.quaternion_matrix(
-                                [ori.x, ori.y, ori.z, ori.w])
-                            frame_T_gripper_matrix[0, 3] = ps.pose.position.x
-                            frame_T_gripper_matrix[1, 3] = ps.pose.position.y
-                            frame_T_gripper_matrix[2, 3] = ps.pose.position.z
+                                ori = ps.pose.orientation
+                                frame_T_gripper_matrix = tft.quaternion_matrix(
+                                    [ori.x, ori.y, ori.z, ori.w])
+                                frame_T_gripper_matrix[0, 3] = ps.pose.position.x
+                                frame_T_gripper_matrix[1, 3] = ps.pose.position.y
+                                frame_T_gripper_matrix[2, 3] = ps.pose.position.z
 
-                            ans = np.dot(base_T_frame_matrix,
-                                        frame_T_gripper_matrix)
-                            ans2 = tft.quaternion_from_matrix(ans)
-                            print("ans2: ", ans2)
-                            goal_ps = PoseStamped()
-                            goal_ps.pose.position.x = ans[0, 3]
-                            goal_ps.pose.position.y = ans[1, 3]
-                            goal_ps.pose.position.z = ans[2, 3]
-                            goal_ps.pose.orientation.x = ans2[0]
-                            goal_ps.pose.orientation.y = ans2[1]
-                            goal_ps.pose.orientation.z = ans2[2]
-                            goal_ps.pose.orientation.w = ans2[3]
-                            goal_ps.header.frame_id = "base_link"
-                            print("IN BASE_LINK:\n", ps_str(goal_ps))
-                        else:
-                            goal_ps = ps
-                        print("Pose to move to: " + ps_str(goal_ps))
-                        res = self.arm.move_to_pose(goal_ps)
-                        # If moving was successful, break
-                        if res is None:
+                                ans = np.dot(base_T_frame_matrix,
+                                            frame_T_gripper_matrix)
+                                ans2 = tft.quaternion_from_matrix(ans)
+                                print("ans2: ", ans2)
+                                goal_ps = PoseStamped()
+                                goal_ps.pose.position.x = ans[0, 3]
+                                goal_ps.pose.position.y = ans[1, 3]
+                                goal_ps.pose.position.z = ans[2, 3]
+                                goal_ps.pose.orientation.x = ans2[0]
+                                goal_ps.pose.orientation.y = ans2[1]
+                                goal_ps.pose.orientation.z = ans2[2]
+                                goal_ps.pose.orientation.w = ans2[3]
+                                goal_ps.header.frame_id = "base_link"
+                                print("IN BASE_LINK:\n", ps_str(goal_ps))
+                            else:
+                                goal_ps = ps
+                            print("Pose to move to: " + ps_str(goal_ps))
+                            res = self.arm.move_to_pose(goal_ps)
+                            # If moving was successful, break
+                            if res is not None:
+                                print("Iteration", i, "successful.")
+                                break
+                        except Exception as e:
                             print("Iteration", i, "failed.")
-			    self.wiggle_head()
-			    rospy.sleep(1.5)
                             if i == 2:
                                 raise Exception("FAILED")
-                        else:
-                            print("Iteration", i, "successful.")
-                            break
+                            else:
+                                self.wiggle_head()
+                                rospy.sleep(1.5)
+
 
                     ########################################################
                     # Original
