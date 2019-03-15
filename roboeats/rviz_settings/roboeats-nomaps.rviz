@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Marker1
         - /PlanningScene1
       Splitter Ratio: 0.5
     Tree Height: 551
@@ -1027,22 +1026,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 7.8769
+      Distance: 6.46586
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.2255
-        Y: 1.43839
-        Z: -0.283358
+        X: 1.09814
+        Y: 2.20057
+        Z: 0.355872
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.8698
+      Pitch: 0.5848
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.41359
+      Yaw: 1.19359
     Saved: ~
 Window Geometry:
   Camera:
