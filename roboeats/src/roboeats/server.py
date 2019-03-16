@@ -277,7 +277,7 @@ class RoboEatsServer(object):
         frame_attached_to = 'gripper_link'
         frames_okay_collide_with = ['gripper_link', 'l_gripper_finger_link', 'r_gripper_finger_link', 'wrist_roll_link']
         lunchbox_x_offset = 0.1
-        self.planning_scene.attachBox("lunchbox", 0.10, 0.10, 0.04, lunchbox_x_offset, 0, 0, frame_attached_to, frames_okay_collide_with)
+        self.planning_scene.attachBox("lunchbox", 0.10, 0.10, 0.02, lunchbox_x_offset, 0, 0, frame_attached_to, frames_okay_collide_with)
 
     def remove_lunchbox(self):
         self.planning_scene.removeAttachedObject('lunchbox')
@@ -288,8 +288,8 @@ class RoboEatsServer(object):
         (Segment 1a)
             0. Initialize robot
             1. (OMITTED) Move to start pose
-            2. Open microwave (p2.pkl)
-            2b. Move microwave lid (p2b.pkl)
+            2. Open microwave (p2.pkl) (done)
+            2b. Move microwave lid (p2b.pkl) (done)
         """
         # if id in self._food_items:
         rospy.loginfo("0. Initialize robot")
@@ -316,9 +316,9 @@ class RoboEatsServer(object):
     def start_segment1b(self, id):
         """
         (Segment 1b)
-            3. Grab lunchbox (p1.pkl)
+            3. Grab lunchbox (p1.pkl) (done - but redo if have enough time)
             4. Put it into microwave (p3.pkl)
-            5. Close microwave (p4a.pkl, p4b.pkl) <- needs to be split so we can change planning scenes
+            5. Close microwave (p4a.pkl, p4b.pkl) (done) <- needs to be split so we can change planning scenes
 
         """
         # if id in self._food_items:
@@ -367,10 +367,10 @@ class RoboEatsServer(object):
         self.__load_program_and_run__("pbd5.pkl", id)
 
         rospy.loginfo("8. Wait for food to finish microwaving (in seconds)")
-        rospy.sleep(60)
+        rospy.sleep(5)
 
         rospy.loginfo("9. Wait for cooldown (in seconds)")
-        rospy.sleep(40) 
+        # rospy.sleep(40) 
         rospy.loginfo("FINISHED SEGMENT 2")
         # else:
         #     print("Food item " + str(id) + " does not exist.")
@@ -378,7 +378,8 @@ class RoboEatsServer(object):
     def start_segment3(self, id):
         """
         (Segment 3)
-            10. Open microwave (p2.pkl)
+            10. Open microwave (p2.pkl) (done)
+            10. Move microwave lid (p2b.pkl) (done)
             11. Grab lunchbox (p6.pkl)
             12. (OMITTED) Move to dropoff pose
             13. Put down lunchbox (p7.pkl)
@@ -387,6 +388,9 @@ class RoboEatsServer(object):
         rospy.loginfo("STARTING SEGMENT 3")
         rospy.loginfo("10. Open microwave")
         self.__load_program_and_run__("pbd2.pkl", id)
+
+        rospy.loginfo("10. Move microwave lid ")
+        self.__load_program_and_run__("pbd2b.pkl", id)
 
         rospy.loginfo("11. Grab lunchbox")
         self.__load_program_and_run__("pbd1.pkl", id)
