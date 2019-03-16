@@ -465,7 +465,6 @@ def main():
                                              server.handle_start_sequence)
     rospy.loginfo("roboeats_server: running...")
 
-    server.start_segment1(1)
     rospy.spin()
 
 
