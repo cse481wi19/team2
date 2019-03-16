@@ -271,10 +271,11 @@ class RoboEatsServer(object):
         self.planning_scene.addBox('microwave_door', 0.39, microwave_door_width, microwave_height + 0.01, microwave_door_x, microwave_door_y, table_height + microwave_z + microwave_height/2 + 0.005)
 
     def attach_lunchbox(self):
+	self.remove_lunchbox()
         frame_attached_to = 'gripper_link'
         frames_okay_collide_with = ['gripper_link', 'l_gripper_finger_link', 'r_gripper_finger_link', 'wrist_roll_link']
         lunchbox_x_offset = 0.1
-        self.planning_scene.attachBox("lunchbox", 0.14, 0.14, 0.08, lunchbox_x_offset, 0, 0, frame_attached_to, frames_okay_collide_with)
+        self.planning_scene.attachBox("lunchbox", 0.10, 0.10, 0.04, lunchbox_x_offset, 0, 0, frame_attached_to, frames_okay_collide_with)
 
     def remove_lunchbox(self):
         self.planning_scene.removeAttachedObject('lunchbox')
