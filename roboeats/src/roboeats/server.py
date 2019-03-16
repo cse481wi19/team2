@@ -35,7 +35,7 @@ class RoboEatsServer(object):
 
     MICROWAVE_LOCATION_NAME = "microwave_location"
     DROPOFF_LOCATION_NAME = "dropoff_location"
-    FOOD_ALIAS = "food"
+    FOOD_ALIAS = "food_id"
 
     def __init__(self, save_file_path="food_items.pkl", nav_file_path="annotator_positions.pkl"):
         self._food_items_pub = rospy.Publisher(FOOD_ITEMS_TOPIC,
@@ -317,7 +317,7 @@ class RoboEatsServer(object):
         """
         (Segment 1b)
             3. Grab lunchbox (p1.pkl) (done - but redo if have enough time)
-            4. Put it into microwave (p3.pkl) (done)
+            4. Put it into microwave (p3.pkl) (done-iffy)
             5. Close microwave (p4a.pkl, p4b.pkl) (done) <- needs to be split so we can change planning scenes
 
         """
@@ -364,7 +364,7 @@ class RoboEatsServer(object):
         # if id in self._food_items:
         rospy.loginfo("STARTING SEGMENT 2")
         rospy.loginfo("6. Enter time(1 min)")
-        self.__load_program_and_run__("pbd5.pkl", id)
+        self.__load_program_and_run__("p5.pkl", id)
 
         rospy.loginfo("8. Wait for food to finish microwaving (in seconds)")
         rospy.sleep(5)
@@ -414,13 +414,13 @@ class RoboEatsServer(object):
     def start_segment4(self, id):
         """
         (Segment 4)
-            14. Move to start pose
+            14. (OMITTED) Move to start pose
             15. Close microwave (p4a.pkl, p4b.pkl)
         """
         # if id in self._food_items:
         rospy.loginfo("STARTING SEGMENT 4")
-        rospy.loginfo("14. Move to start pose")
-        self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
+        # rospy.loginfo("14. Move to start pose")
+        # self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
         rospy.sleep(2)
 
         rospy.loginfo("15. Close microwave")
