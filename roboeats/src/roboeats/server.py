@@ -397,6 +397,8 @@ class RoboEatsServer(object):
         rospy.sleep(4)
 
         rospy.loginfo("11. Grab lunchbox")
+        print('lowering torso for better view')
+        torso.set_height(0.35)
         self.__load_program_and_run__("p6a.pkl", id)
 
         self.attach_lunchbox()
