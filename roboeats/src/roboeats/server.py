@@ -14,6 +14,8 @@ from moveit_python import PlanningSceneInterface
 from map_annotator import Annotator
 from pbd import Program, Command
 
+from food_item import FoodItem
+
 from roboeats.msg import FoodItems
 from roboeats.srv import CreateFoodItem, CreateFoodItemResponse
 from roboeats.srv import RemoveFoodItem, RemoveFoodItemResponse
@@ -271,7 +273,7 @@ class RoboEatsServer(object):
         self.planning_scene.addBox('microwave_door', 0.39, microwave_door_width, microwave_height + 0.01, microwave_door_x, microwave_door_y, table_height + microwave_z + microwave_height/2 + 0.005)
 
     def attach_lunchbox(self):
-	self.remove_lunchbox()
+        self.remove_lunchbox()
         frame_attached_to = 'gripper_link'
         frames_okay_collide_with = ['gripper_link', 'l_gripper_finger_link', 'r_gripper_finger_link', 'wrist_roll_link']
         lunchbox_x_offset = 0.1

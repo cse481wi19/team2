@@ -16,6 +16,7 @@ from geometry_msgs.msg import PoseStamped
 from ar_track_alvar_msgs.msg import AlvarMarkers
 from robot_controllers_msgs.msg import QueryControllerStatesAction, QueryControllerStatesGoal, ControllerState
 from roboeats.srv import StartSequenceRequest
+from roboeats.srv import CreateFoodItemRequest
 
 def pos_rot_str(pos, rot):
     return "pos: (%.5f, %.5f, %.5f), rot: (%.5f, %.5f, %.5f, %.5f)" % (pos[0], pos[1], pos[2], rot[0], rot[1], rot[2], rot[3])
@@ -67,6 +68,7 @@ def print_commands():
     print("all-segments: run all segments")
     print("set-food-id: sets food id")
     print("list-foods: prints out foods")
+    print("addf <name> <description> <id>: adds the food item")
     print("help: Show this list of commands")
 
 def print_intro():
@@ -155,7 +157,7 @@ def main():
         if not user_input:
             # string is empty, ignore
             continue
-        args = user_input.split(" ", 2)
+        args = user_input.split(" ")
         cmd = args[0]
         num_args = len(args) - 1
         if cmd == "create":
@@ -328,6 +330,15 @@ def main():
                 food_id = int(args[1])
             else:
                 print("Requires <food_id>")
+        elif cmd == "addf":
+            if num_args == 3:
+                rqst = CreateFoodItemRequest()
+                rqst.name = args[1]
+                rqst.description = args[2]
+                rqst.id = int(args[3])
+                server.handle_create_food_item(rqst)
+            else:
+                print("Requires <name> <description> <id>")
         elif cmd == "list-foods":
             server.__print_food_items__()
         else:
