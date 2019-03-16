@@ -61,6 +61,13 @@ class RoboEatsServer(object):
         rospy.loginfo("initializing gripper...")
         self.gripper = robot_api.Gripper()
 
+
+        rospy.loginfo("initializing head...")
+        self.head = robot_api.Head()
+
+        rospy.loginfo("initializing torso...")
+        self.torso = robot_api.Torso()
+
         rospy.loginfo("initializing planning scene...")
         self.planning_scene = PlanningSceneInterface('base_link')
 
@@ -150,7 +157,7 @@ class RoboEatsServer(object):
         if os.path.isfile(program_fp):
             rospy.loginfo("File " + program_fp + " exists. Loading...")
             with open(program_fp, "rb") as load_file:
-                program = Program(self.arm, self.gripper)
+                program = Program(self.arm, self.gripper, self.head, self.torso)
                 program.commands = pickle.load(load_file)
                 rospy.loginfo("Program loaded...")
                 ar_marker_frame = self.__food_id_to_ar_frame__(id)
