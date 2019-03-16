@@ -296,6 +296,7 @@ class RoboEatsServer(object):
         self.init_robot()
 
         self.start_obstacles_2()
+        rospy.sleep(4)
 
         # rospy.loginfo("1. Move to start pose")
         # self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
@@ -323,7 +324,7 @@ class RoboEatsServer(object):
         """
         # if id in self._food_items:
         self.start_obstacles_2()
-        rospy.sleep(3.5)
+        rospy.sleep(4)
 
         rospy.loginfo("STARTING SEGMENT 1b")
         rospy.loginfo("3. Grab lunchbox")
@@ -331,6 +332,7 @@ class RoboEatsServer(object):
         rospy.sleep(1.5)
 
         self.attach_lunchbox()
+        rospy.sleep(2)
 
         rospy.loginfo("4. Put it into microwave")
         self.__load_program_and_run__("p3.pkl", id)
@@ -342,10 +344,9 @@ class RoboEatsServer(object):
         self.__load_program_and_run__("p4a.pkl", id)
         rospy.sleep(1.5)
 
-
         rospy.loginfo("5b. Changing obstacles...")
         self.start_obstacles_1()
-        rospy.sleep(3.5)
+        rospy.sleep(4)
 
         rospy.loginfo("5b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
@@ -392,21 +393,26 @@ class RoboEatsServer(object):
         rospy.loginfo("10. Move microwave lid ")
         self.__load_program_and_run__("pbd2b.pkl", id)
 
+        self.start_obstacles_2()
+        rospy.sleep(4)
+
         rospy.loginfo("11. Grab lunchbox")
         self.__load_program_and_run__("p6a.pkl", id)
 
         self.attach_lunchbox()
+        rospy.sleep(2)
 
         self.__load_program_and_run__("p6b.pkl", id)
 
-        rospy.loginfo("12. Move to dropoff pose")
-        self._map_annotator.goto_position(self.DROPOFF_LOCATION_NAME)
-        rospy.sleep(2)
-
-        self.remove_lunchbox()
+        # rospy.loginfo("12. Move to dropoff pose")
+        # self._map_annotator.goto_position(self.DROPOFF_LOCATION_NAME)
+        # rospy.sleep(2)
 
         rospy.loginfo("13. Put down lunchbox")
         self.__load_program_and_run__("pbd7.pkl", id)
+
+        self.remove_lunchbox()
+
         rospy.loginfo("FINISHED SEGMENT 3")
         # else:
         #     print("Food item " + str(id) + " does not exist.")
