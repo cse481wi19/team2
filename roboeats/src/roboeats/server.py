@@ -14,7 +14,7 @@ from moveit_python import PlanningSceneInterface
 from map_annotator import Annotator
 from pbd import Program, Command
 
-from food_item import FoodItem
+from roboeats import FoodItem
 from roboeats.msg import FoodItems
 from roboeats.srv import CreateFoodItem, CreateFoodItemResponse
 from roboeats.srv import RemoveFoodItem, RemoveFoodItemResponse
