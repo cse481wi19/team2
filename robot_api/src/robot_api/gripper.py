@@ -21,7 +21,7 @@ class Gripper(object):
     """Gripper controls the robot's gripper.
     """
     MIN_EFFORT = 35  # Min grasp force, in Newtons
-    MAX_EFFORT = 100  # Max grasp force, in Newtons
+    MAX_EFFORT = 75  # Max grasp force, in Newtons
 
     def __init__(self):
         # TODO: Create actionlib client

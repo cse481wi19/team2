@@ -15,6 +15,7 @@ from pbd import Command, Program
 from geometry_msgs.msg import PoseStamped
 from ar_track_alvar_msgs.msg import AlvarMarkers
 from robot_controllers_msgs.msg import QueryControllerStatesAction, QueryControllerStatesGoal, ControllerState
+from roboeats.srv import StartSequenceRequest
 
 def pos_rot_str(pos, rot):
     return "pos: (%.5f, %.5f, %.5f), rot: (%.5f, %.5f, %.5f, %.5f)" % (pos[0], pos[1], pos[2], rot[0], rot[1], rot[2], rot[3])
@@ -37,6 +38,7 @@ def print_commands():
     print("save-pose|sp <alias> <frame>: saves the current pose relative to the given frame with an alias. <frame> can either be relative to the base or the tag.")
     print("save-open-gripper|sog: save open gripper cmd in sequence")
     print("save-close-gripper|scg: save close gripper cmd in sequence")
+    print("alias <i> <new_alias>: sets an alias for a cmd at index i")
     print("delete|d: deletes the last saved command")
     print("replace-frame|rf <alias> <new_frame>: replaces frames in poses with the given alias")
     print("run-program|rp: runs the current program sequence.")
@@ -54,6 +56,17 @@ def print_commands():
     print("init: initializes the robot")
     print("attachl: attaches lunchbox obstacle")
     print("detachl: detaches lunchbox obstacle")
+    print("obstacles1: start obstacles1 (microwave with lid closed)")
+    print("obstacles2: start obstacles2 (microwave with lid open)")
+    print("clear-obstacles: clears all obstacles")
+    print("segment1a: start segment 1a")
+    print("segment1b: start segment 1b")
+    print("segment2: start segment 2")
+    print("segment3: start segment 3")
+    print("segment4: start segment 4")
+    print("all-segments: run all segments")
+    print("set-food-id: sets food id")
+    print("list-foods: prints out foods")
     print("help: Show this list of commands")
 
 def print_intro():
@@ -133,9 +146,10 @@ def main():
     server = RoboEatsServer()
 
     print_intro()
-    program = Program(arm, gripper)
+    program = Program(arm, gripper, head, torso)
     print("Program created.")
     running = True
+    food_id = None
     while running:
         user_input = raw_input(">>>")
         if not user_input:
@@ -175,12 +189,6 @@ def main():
                         rot = transform[1]
                         x, y, z, w = rot
                         print("stage 1: " + pos_rot_str(transform[0], transform[1]))
-                            # if frame == "ar_marker_17" and x < 0 and y < 0 and z > 0 and w < 0:
-                            #     break
-                            # elif frame == "ar_marker_14" and x < 0 and y < 0 and z < 0 and w < 0:
-                            #     break
-                            # else:
-                            #     break
                         tag_T_base = create_transform_matrix(transform)
                         user_input = raw_input("saved base relative to the frame, move the arm and press enter when done")
                         transform = listener.lookupTransform("base_link", "wrist_roll_link", rospy.Time(0))
@@ -212,6 +220,13 @@ def main():
         elif cmd == "save-close-gripper" or cmd == "scg":
             program.add_close_gripper_command()
             gripper.close()
+        elif cmd == "alias":
+            if num_args == 2:
+                i = int(args[1])
+                alias = args[2]
+                program.set_alias(i, alias)
+            else:
+                print("alias requires <i> <alias>")
         elif cmd == "delete" or cmd == "d":
             program.delete_last_command()
         elif cmd == "replace-frame" or cmd == "rf":
@@ -271,14 +286,15 @@ def main():
             if num_args == 1:
                 height = float(args[1])
                 program.add_set_height_command(height)
+                torso.set_height(height)
             else:
                 print("missing <height>")
         elif cmd == "head":
             if num_args == 2:
                 pan = float(args[1])
                 tilt = float(args[2])
-                head.pan_tilt(pan, tilt)
                 program.add_set_pan_tilt_command(pan, tilt)
+                head.pan_tilt(pan, tilt)
             else:
                 print("missing <pan> <tilt>")
         elif cmd == "init":
@@ -287,6 +303,33 @@ def main():
             server.attach_lunchbox()
         elif cmd == "detachl":
             server.remove_lunchbox()
+        elif cmd == "obstacles1":
+            server.start_obstacles_1()
+        elif cmd == "obstacles2":
+            server.start_obstacles_2()
+        elif cmd == "clear-obstacles":
+            server.clear_obstacles()
+        elif cmd == "segment1a":
+            server.start_segment1a(food_id)
+        elif cmd == "segment1b":
+            server.start_segment1b(food_id)
+        elif cmd == "segment2":
+            server.start_segment2(food_id)
+        elif cmd == "segment3":
+            server.start_segment3(food_id)
+        elif cmd == "segment4":
+            server.start_segment4(food_id)
+        elif cmd == "all-segments":
+            rqst = StartSequenceRequest()
+            rqst.id = food_id
+            server.handle_start_sequence(rqst)
+        elif cmd == "set-food-id":
+            if num_args == 1:
+                food_id = int(args[1])
+            else:
+                print("Requires <food_id>")
+        elif cmd == "list-foods":
+            server.__print_food_items__()
         else:
             print("NO SUCH COMMAND: " + cmd)
         print("")
