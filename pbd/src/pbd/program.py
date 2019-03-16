@@ -148,6 +148,8 @@ class Program(object):
                             if res is not None:
                                 print("Iteration", i, "successful.")
                                 break
+                            else: 
+                                raise Exception()
                         except Exception as e:
                             print("Iteration", i, "failed.")
                             if i == 2:

@@ -317,7 +317,7 @@ class RoboEatsServer(object):
         """
         (Segment 1b)
             3. Grab lunchbox (p1.pkl) (done - but redo if have enough time)
-            4. Put it into microwave (p3.pkl)
+            4. Put it into microwave (p3.pkl) (done)
             5. Close microwave (p4a.pkl, p4b.pkl) (done) <- needs to be split so we can change planning scenes
 
         """
@@ -380,7 +380,7 @@ class RoboEatsServer(object):
         (Segment 3)
             10. Open microwave (p2.pkl) (done)
             10. Move microwave lid (p2b.pkl) (done)
-            11. Grab lunchbox (p6.pkl)
+            11. Grab lunchbox (p6a.pkl, p6b.pkl)
             12. (OMITTED) Move to dropoff pose
             13. Put down lunchbox (p7.pkl)
         """
@@ -393,9 +393,11 @@ class RoboEatsServer(object):
         self.__load_program_and_run__("pbd2b.pkl", id)
 
         rospy.loginfo("11. Grab lunchbox")
-        self.__load_program_and_run__("pbd1.pkl", id)
+        self.__load_program_and_run__("p6a.pkl", id)
 
         self.attach_lunchbox()
+
+        self.__load_program_and_run__("p6b.pkl", id)
 
         rospy.loginfo("12. Move to dropoff pose")
         self._map_annotator.goto_position(self.DROPOFF_LOCATION_NAME)
