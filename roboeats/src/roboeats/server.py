@@ -388,10 +388,10 @@ class RoboEatsServer(object):
         # if id in self._food_items:
         rospy.loginfo("STARTING SEGMENT 3")
         rospy.loginfo("10. Open microwave")
-        self.__load_program_and_run__("pbd2.pkl", id)
+        self.__load_program_and_run__("p2.pkl", id)
 
         rospy.loginfo("10. Move microwave lid ")
-        self.__load_program_and_run__("pbd2b.pkl", id)
+        self.__load_program_and_run__("p2b.pkl", id)
 
         self.start_obstacles_2()
         rospy.sleep(4)

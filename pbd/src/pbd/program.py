@@ -149,11 +149,12 @@ class Program(object):
                                 print("Iteration", i, "successful.")
                                 break
                             else: 
-                                raise Exception()
+                                raise ValueError()
                         except Exception as e:
                             print("Iteration", i, "failed.")
                             if i == 2:
-                                raise Exception("FAILED")
+                                print('Current Motion Failed, exiting... ')
+                                sys.exit(1)
                             else:
                                 self.wiggle_head()
                                 rospy.sleep(1.5)
