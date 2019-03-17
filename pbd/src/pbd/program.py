@@ -5,6 +5,7 @@ import robot_api
 import tf
 import tf.transformations as tft
 import numpy as np
+import sys
 
 from geometry_msgs.msg import PoseStamped
 from command import Command
@@ -95,7 +96,7 @@ class Program(object):
                     #############################################################
                     # Retries using move_to_pose only
                     # # Attempt to move to the pose 3 times
-                    for i in range(3):
+                    for i in range(5):
                         try:
                             print("In program.py retry loop, i=" + str(i))
                             if frame != "base_link":
@@ -152,7 +153,7 @@ class Program(object):
                                 raise ValueError()
                         except Exception as e:
                             print("Iteration", i, "failed.")
-                            if i == 2:
+                            if i == 4:
                                 print('Current Motion Failed, exiting... ')
                                 sys.exit(1)
                             else:

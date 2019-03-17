@@ -253,17 +253,17 @@ class RoboEatsServer(object):
         
 
         microwave_side_height = 0.2
-        microwave_r_width = 0.04
-        microwave_r_y = microwave_y - 0.2
+        microwave_r_width = 0.04 + 0.05
+        microwave_r_y = microwave_y - 0.25
         microwave_l_width = 0.035
-        microwave_l_y = microwave_y + 0.222
+        microwave_l_y = microwave_y + 0.15
         microwave_bottom_height = 0.05
         microwave_top_height = 0.04
         microwave_back_depth = 0.03
         microwave_back_x = table_x + (microwave_depth / 2) + (microwave_back_depth/2)
-        microwave_door_width = 0.09
+        microwave_door_width = 0.05
         microwave_door_x = microwave_x - 0.33
-        microwave_door_y = microwave_l_y + 0.027
+        microwave_door_y = microwave_l_y + 0.05
 
         self.planning_scene.addBox('microwave_top', microwave_depth, microwave_width, microwave_top_height, microwave_x, microwave_y, table_height + microwave_z + microwave_bottom_height + microwave_side_height + (microwave_top_height/2))
         self.planning_scene.addBox('microwave_bottom', microwave_depth, microwave_width, microwave_bottom_height, microwave_x, microwave_y, table_height + microwave_z + (microwave_bottom_height/2))
@@ -456,7 +456,8 @@ class RoboEatsServer(object):
 
         self.start_segment3(id)
 
-        self.start_segment4(id)
+         # we decioded that we don't need to close the door :)
+         # self.start_segment4(id)
 
         rospy.loginfo("Remove food item from the list.")
         # self.__remove_food_item__(id)
