@@ -253,8 +253,8 @@ class RoboEatsServer(object):
         
 
         microwave_side_height = 0.2
-        microwave_r_width = 0.1
-        microwave_r_y = microwave_y - 0.18
+        microwave_r_width = 0.04
+        microwave_r_y = microwave_y - 0.2
         microwave_l_width = 0.035
         microwave_l_y = microwave_y + 0.222
         microwave_bottom_height = 0.05
