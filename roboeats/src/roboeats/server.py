@@ -266,7 +266,7 @@ class RoboEatsServer(object):
         microwave_door_y = microwave_l_y + 0.05
 
         self.planning_scene.addBox('microwave_top', microwave_depth, microwave_width, microwave_top_height, microwave_x, microwave_y, table_height + microwave_z + microwave_bottom_height + microwave_side_height + (microwave_top_height/2))
-        self.planning_scene.addBox('microwave_bottom', microwave_depth, microwave_width, microwave_bottom_height, microwave_x, microwave_y, table_height + microwave_z + (microwave_bottom_height/2))
+        self.planning_scene.addBox('microwave_bottom', microwave_depth, microwave_width, microwave_bottom_height, microwave_x, microwave_y, table_height + microwave_z + (microwave_bottom_height/2) - 0.015)
         self.planning_scene.addBox('microwave_side_r', microwave_depth, microwave_r_width, microwave_side_height, microwave_x, microwave_r_y, table_height + microwave_z + microwave_bottom_height + (microwave_side_height/2))
         self.planning_scene.addBox('microwave_side_l', microwave_depth, microwave_l_width, microwave_side_height, microwave_x, microwave_l_y, table_height + microwave_z + microwave_bottom_height +  microwave_side_height/2)
         self.planning_scene.addBox('microwave_back', microwave_back_depth, microwave_width, microwave_height, microwave_back_x, microwave_y, table_height + microwave_z + microwave_height/2)
