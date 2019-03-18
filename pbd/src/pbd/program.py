@@ -75,7 +75,7 @@ class Program(object):
 
     def wiggle_head(self):
         head = robot_api.Head()
-        head.pan_tilt(-0.1, 0.3)
+        head.pan_tilt(-0.1, 0.5)
 
         rospy.sleep(2)
         head.pan_tilt(-0.1, 0.57)	
