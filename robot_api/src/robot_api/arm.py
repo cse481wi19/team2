@@ -27,7 +27,7 @@ from moveit_msgs.msg import MoveItErrorCodes, MoveGroupAction
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest
 
 ALLOWED_PLANNING_TIME = 6.0
-TOLERANCE = 0.004
+TOLERANCE = 0.0045
 
 def moveit_error_string(val):
     """Returns a string associated with a MoveItErrorCode.
