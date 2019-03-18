@@ -448,10 +448,23 @@ class RoboEatsServer(object):
         rospy.loginfo("STARTING SEGMENT 4")
         # rospy.loginfo("14. Move to start pose")
         # self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
-        rospy.sleep(2)
+        # rospy.sleep(2)
+        
+        self.start_obstacles_2()
+        rospy.sleep(4)
 
-        rospy.loginfo("15. Close microwave")
-        self.__load_program_and_run__("pbd4.pkl", id)
+        rospy.loginfo("15a. Close microwave pt. 1")
+        self.__load_program_and_run__("p4a.pkl", id)
+        rospy.sleep(1.5)
+
+        rospy.loginfo("15b. Changing obstacles...")
+        self.start_obstacles_1()
+        rospy.sleep(4)
+
+        rospy.loginfo("15b. Close microwave pt. 2")
+        self.__load_program_and_run__("p4b.pkl", id)
+        rospy.sleep(1.5)
+
         rospy.loginfo("FINISHED SEGMENT 4")
         # else:
         #     print("Food item " + str(id) + " does not exist.")
@@ -477,8 +490,8 @@ class RoboEatsServer(object):
         self.start_segment3b(id)
         self.start_segment3b(id)
 
-         # we decioded that we don't need to close the door :)
-         # self.start_segment4(id)
+        # we decioded that we don't need to close the door :)
+        self.start_segment4(id)
 
         rospy.loginfo("Remove food item from the list.")
         # self.__remove_food_item__(id)
