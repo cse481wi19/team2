@@ -254,14 +254,14 @@ class RoboEatsServer(object):
 
         microwave_side_height = 0.2
         microwave_r_width = 0.04 + 0.05
-        microwave_r_y = microwave_y - 0.25
+        microwave_r_y = microwave_y - 0.19
         microwave_l_width = 0.035
-        microwave_l_y = microwave_y + 0.15
+        microwave_l_y = microwave_y + 0.2
         microwave_bottom_height = 0.05
         microwave_top_height = 0.04
         microwave_back_depth = 0.03
         microwave_back_x = table_x + (microwave_depth / 2) + (microwave_back_depth/2)
-        microwave_door_width = 0.05
+        microwave_door_width = 0.04
         microwave_door_x = microwave_x - 0.33
         microwave_door_y = microwave_l_y + 0.05
 
@@ -270,7 +270,7 @@ class RoboEatsServer(object):
         self.planning_scene.addBox('microwave_side_r', microwave_depth, microwave_r_width, microwave_side_height, microwave_x, microwave_r_y, table_height + microwave_z + microwave_bottom_height + (microwave_side_height/2))
         self.planning_scene.addBox('microwave_side_l', microwave_depth, microwave_l_width, microwave_side_height, microwave_x, microwave_l_y, table_height + microwave_z + microwave_bottom_height +  microwave_side_height/2)
         self.planning_scene.addBox('microwave_back', microwave_back_depth, microwave_width, microwave_height, microwave_back_x, microwave_y, table_height + microwave_z + microwave_height/2)
-        self.planning_scene.addBox('microwave_door', 0.39, microwave_door_width, microwave_height + 0.01, microwave_door_x, microwave_door_y, table_height + microwave_z + microwave_height/2 + 0.005)
+        self.planning_scene.addBox('microwave_door', 0.42, microwave_door_width, microwave_height + 0.01, microwave_door_x, microwave_door_y, table_height + microwave_z + microwave_height/2 + 0.005)
 
     def attach_lunchbox(self):
         self.remove_lunchbox()
@@ -389,6 +389,9 @@ class RoboEatsServer(object):
         # if id in self._food_items:
         self.start_obstacles_2()
         rospy.sleep(4)
+        
+	rospy.loginfo("PRE INITIALIZING FOR SEGMENT 3")
+	self.__load_program_and_run__("segment3a-pre.pkl", id)
 
         rospy.loginfo("STARTING SEGMENT 3")
         rospy.loginfo("10a. Open microwave")
