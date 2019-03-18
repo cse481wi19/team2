@@ -390,8 +390,8 @@ class RoboEatsServer(object):
         self.start_obstacles_2()
         rospy.sleep(4)
         
-	rospy.loginfo("PRE INITIALIZING FOR SEGMENT 3")
-	self.__load_program_and_run__("segment3a-pre.pkl", id)
+        rospy.loginfo("PRE INITIALIZING FOR SEGMENT 3")
+        self.__load_program_and_run__("segment3a-pre.pkl", id)
 
         rospy.loginfo("STARTING SEGMENT 3")
         rospy.loginfo("10a. Open microwave")
