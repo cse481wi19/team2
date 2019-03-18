@@ -261,7 +261,7 @@ class RoboEatsServer(object):
         microwave_top_height = 0.04
         microwave_back_depth = 0.03
         microwave_back_x = table_x + (microwave_depth / 2) + (microwave_back_depth/2)
-        microwave_door_width = 0.04
+        microwave_door_width = 0.045
         microwave_door_x = microwave_x - 0.33
         microwave_door_y = microwave_l_y + 0.05
 
@@ -491,7 +491,7 @@ class RoboEatsServer(object):
 
         self.start_segment3a(id)
         self.start_segment3b(id)
-        self.start_segment3b(id)
+        self.start_segment3c(id)
 
         # we decioded that we don't need to close the door :)
         self.start_segment4(id)
