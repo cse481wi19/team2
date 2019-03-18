@@ -357,8 +357,9 @@ class RoboEatsServer(object):
             4. Put it into microwave (p3.pkl) (done-iffy)
             5. Close microwave (p4a.pkl, p4b.pkl) (done) <- needs to be split so we can change planning scenes
         """
+
+
         self.start_obstacles_2()
-        
         rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
         rospy.sleep(1.5)
