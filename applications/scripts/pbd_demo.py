@@ -10,7 +10,8 @@ import tf
 import tf.transformations as tft
 import tf2_ros
 
-from roboeats import RoboEatsServer, FoodItem
+import roboeats
+
 from pbd import Command, Program
 from geometry_msgs.msg import PoseStamped
 from ar_track_alvar_msgs.msg import AlvarMarkers
@@ -145,7 +146,7 @@ def main():
     head = robot_api.Head()
     print('got head')
 
-    server = RoboEatsServer()
+    server = roboeats.RoboEatsServer()
 
     print_intro()
     program = Program(arm, gripper, head, torso)
