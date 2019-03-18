@@ -73,6 +73,8 @@ class RoboEatsServer(object):
         rospy.loginfo("initializing planning scene...")
         self.planning_scene = PlanningSceneInterface('base_link')
 
+        self.curr_obstacle = None
+
         rospy.loginfo("Starting map annotator...")
         # We should expect the nav file given to contain the annotated positions:
         #   MICROWAVE_LOCATION_NAME - starting location in front of the microwave.
@@ -211,6 +213,9 @@ class RoboEatsServer(object):
         """
         This scene has the microwave in a closed position.
         """
+        if self.curr_obstacle == 1:
+            # don't change it if it's already set to this obstacle
+            return
         self.planning_scene.clear()
         self.planning_scene.removeCollisionObject('table')
         self.planning_scene.removeCollisionObject('floor')
@@ -229,11 +234,16 @@ class RoboEatsServer(object):
         microwave_z = 0.06
         microwave_y = 0.18
         self.planning_scene.addBox('microwave', microwave_depth, microwave_width, microwave_height, microwave_x, microwave_y, table_height + microwave_z + microwave_height/2)
+        self.curr_obstacle = 1
+        rospy.sleep(3.5)
     
     def start_obstacles_2(self):
         """
         this scene has the microwave in an open position with the lid open.
         """
+        if self.curr_obstacle == 2:
+            # don't change it if it's already set to this obstacle
+            return
         self.planning_scene.clear()
         self.planning_scene.removeCollisionObject('table')
         self.planning_scene.removeCollisionObject('floor')
@@ -271,6 +281,8 @@ class RoboEatsServer(object):
         self.planning_scene.addBox('microwave_side_l', microwave_depth, microwave_l_width, microwave_side_height, microwave_x, microwave_l_y, table_height + microwave_z + microwave_bottom_height +  microwave_side_height/2)
         self.planning_scene.addBox('microwave_back', microwave_back_depth, microwave_width, microwave_height, microwave_back_x, microwave_y, table_height + microwave_z + microwave_height/2)
         self.planning_scene.addBox('microwave_door', 0.42, microwave_door_width, microwave_height + 0.01, microwave_door_x, microwave_door_y, table_height + microwave_z + microwave_height/2 + 0.005)
+        self.curr_obstacle = 2
+        rospy.sleep(3.5)
 
     def attach_lunchbox(self):
         self.remove_lunchbox()
@@ -296,7 +308,6 @@ class RoboEatsServer(object):
         self.init_robot()
 
         self.start_obstacles_2()
-        rospy.sleep(3.5)
 
         # rospy.loginfo("1. Move to start pose")
         # self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
@@ -324,7 +335,6 @@ class RoboEatsServer(object):
         """
         # if id in self._food_items:
         self.start_obstacles_2()
-        rospy.sleep(3.5)
 
         rospy.loginfo("STARTING SEGMENT 1b")
         rospy.loginfo("3. Grab lunchbox")
@@ -344,7 +354,6 @@ class RoboEatsServer(object):
 
     def start_segment1c(self, id):
         self.start_obstacles_2()
-        rospy.sleep(3.5)
 
         rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
@@ -352,7 +361,6 @@ class RoboEatsServer(object):
 
         rospy.loginfo("5b. Changing obstacles...")
         self.start_obstacles_1()
-        rospy.sleep(3.5)
 
         rospy.loginfo("5b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
@@ -388,7 +396,6 @@ class RoboEatsServer(object):
         """
         # if id in self._food_items:
         self.start_obstacles_2()
-        rospy.sleep(3.5)
         
         rospy.loginfo("PRE INITIALIZING FOR SEGMENT 3")
         self.__load_program_and_run__("segment3a-pre.pkl", id)
@@ -408,7 +415,6 @@ class RoboEatsServer(object):
             11. Grab lunchbox (p6a.pkl, p6b.pkl)
         """
         self.start_obstacles_2()
-        rospy.sleep(3.5)
 
         rospy.loginfo("11. Grab lunchbox")
         # print('lowering torso for better view')
@@ -427,7 +433,6 @@ class RoboEatsServer(object):
             13. Put down lunchbox (p7.pkl)
         """
         self.start_obstacles_2()
-        rospy.sleep(3.5)
 
         # rospy.loginfo("12. Move to dropoff pose")
         # self._map_annotator.goto_position(self.DROPOFF_LOCATION_NAME)
@@ -454,7 +459,6 @@ class RoboEatsServer(object):
         # rospy.sleep(2)
         
         self.start_obstacles_2()
-        rospy.sleep(3.5)
 
         rospy.loginfo("15a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
@@ -462,7 +466,6 @@ class RoboEatsServer(object):
 
         rospy.loginfo("15b. Changing obstacles...")
         self.start_obstacles_1()
-        rospy.sleep(3.5)
 
         rospy.loginfo("15b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
