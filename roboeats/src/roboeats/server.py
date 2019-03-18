@@ -236,7 +236,8 @@ class RoboEatsServer(object):
         self.planning_scene.addBox('microwave', microwave_depth, microwave_width, microwave_height, microwave_x, microwave_y, table_height + microwave_z + microwave_height/2)
         self.curr_obstacle = 1
         rospy.sleep(3.5)
-    
+
+
     def start_obstacles_2(self):
         """
         this scene has the microwave in an open position with the lid open.
@@ -330,10 +331,7 @@ class RoboEatsServer(object):
         (Segment 1b)
             3. Grab lunchbox (p1.pkl) (done - but redo if have enough time)
             4. Put it into microwave (p3.pkl) (done-iffy)
-            5. Close microwave (p4a.pkl, p4b.pkl) (done) <- needs to be split so we can change planning scenes
-
         """
-        # if id in self._food_items:
         self.start_obstacles_2()
 
         rospy.loginfo("STARTING SEGMENT 1b")
@@ -354,7 +352,6 @@ class RoboEatsServer(object):
 
     def start_segment1c(self, id):
         self.start_obstacles_2()
-
         rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
         rospy.sleep(1.5)
