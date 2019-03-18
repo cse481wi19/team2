@@ -64,8 +64,11 @@ def print_commands():
     print("clear-obstacles: clears all obstacles")
     print("segment1a: start segment 1a")
     print("segment1b: start segment 1b")
+    print("segment1c: start segment 1c")
     print("segment2: start segment 2")
-    print("segment3: start segment 3")
+    print("segment3a: start segment 3a")
+    print("segment3b: start segment 3b")
+    print("segment3c: start segment 3c")
     print("segment4: start segment 4")
     print("all-segments: run all segments")
     print("set-food-id: sets food id")
@@ -317,10 +320,16 @@ def main():
             server.start_segment1a(food_id)
         elif cmd == "segment1b":
             server.start_segment1b(food_id)
+        elif cmd == "segment1c":
+            server.start_segment1c(food_id)
         elif cmd == "segment2":
             server.start_segment2(food_id)
-        elif cmd == "segment3":
-            server.start_segment3(food_id)
+        elif cmd == "segment3a":
+            server.start_segment3a(food_id)
+        elif cmd == "segment3b":
+            server.start_segment3b(food_id)
+        elif cmd == "segment3c":
+            server.start_segment3c(food_id)
         elif cmd == "segment4":
             server.start_segment4(food_id)
         elif cmd == "all-segments":

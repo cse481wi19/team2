@@ -339,6 +339,12 @@ class RoboEatsServer(object):
         rospy.sleep(1.5)
 
         self.remove_lunchbox()
+        # else:
+        #     print("Food item " + str(id) + " does not exist.")
+
+    def start_segment1c(self, id):
+        self.start_obstacles_2()
+        rospy.sleep(4)
 
         rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
@@ -351,9 +357,7 @@ class RoboEatsServer(object):
         rospy.loginfo("5b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
         rospy.sleep(1.5)
-        rospy.loginfo("FINISHED SEGMENT 1b")
-        # else:
-        #     print("Food item " + str(id) + " does not exist.")
+        rospy.loginfo("FINISHED SEGMENT 1c")
 
     def start_segment2(self, id):
         """
@@ -376,23 +380,30 @@ class RoboEatsServer(object):
         # else:
         #     print("Food item " + str(id) + " does not exist.")
 
-    def start_segment3(self, id):
+    def start_segment3a(self, id):
         """
         (Segment 3)
-            10. Open microwave (p2.pkl) (done)
-            10. Move microwave lid (p2b.pkl) (done)
-            11. Grab lunchbox (p6a.pkl, p6b.pkl)
-            12. (OMITTED) Move to dropoff pose
-            13. Put down lunchbox (p7.pkl)
+            10a. Open microwave (p2.pkl) (done)
+            10b. Move microwave lid (p2b.pkl) (done)
         """
         # if id in self._food_items:
+        self.start_obstacles_2()
+        rospy.sleep(4)
+
         rospy.loginfo("STARTING SEGMENT 3")
-        rospy.loginfo("10. Open microwave")
+        rospy.loginfo("10a. Open microwave")
         self.__load_program_and_run__("p2.pkl", id)
 
-        rospy.loginfo("10. Move microwave lid ")
+        rospy.loginfo("10b. Move microwave lid ")
         self.__load_program_and_run__("p2b.pkl", id)
+        # else:
+        #     print("Food item " + str(id) + " does not exist.")
 
+    def start_segment3b(self, id):
+        """
+        (Segment 3)
+            11. Grab lunchbox (p6a.pkl, p6b.pkl)
+        """
         self.start_obstacles_2()
         rospy.sleep(4)
 
@@ -406,6 +417,15 @@ class RoboEatsServer(object):
 
         self.__load_program_and_run__("p6b.pkl", id)
 
+    def start_segment3c(self, id):
+        """
+        (Segment 3)
+            12. (OMITTED) Move to dropoff pose
+            13. Put down lunchbox (p7.pkl)
+        """
+        self.start_obstacles_2()
+        rospy.sleep(4)
+
         # rospy.loginfo("12. Move to dropoff pose")
         # self._map_annotator.goto_position(self.DROPOFF_LOCATION_NAME)
         # rospy.sleep(2)
@@ -416,8 +436,7 @@ class RoboEatsServer(object):
         self.remove_lunchbox()
 
         rospy.loginfo("FINISHED SEGMENT 3")
-        # else:
-        #     print("Food item " + str(id) + " does not exist.")
+
 
     def start_segment4(self, id):
         """
@@ -449,12 +468,14 @@ class RoboEatsServer(object):
         rospy.loginfo("Starting sequence for food item: " + str(self._food_items[id]))
 
         self.start_segment1a(id)
-        
         self.start_segment1b(id)
+        self.start_segment1c(id)
 
         self.start_segment2(id)
 
-        self.start_segment3(id)
+        self.start_segment3a(id)
+        self.start_segment3b(id)
+        self.start_segment3b(id)
 
          # we decioded that we don't need to close the door :)
          # self.start_segment4(id)
