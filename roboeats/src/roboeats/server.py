@@ -330,8 +330,6 @@ class RoboEatsServer(object):
         (Segment 1b)
             3. Grab lunchbox (p1.pkl) (done - but redo if have enough time)
             4. Put it into microwave (p3.pkl) (done-iffy)
-            5. Close microwave (p4a.pkl, p4b.pkl) (done) <- needs to be split so we can change planning scenes
-
         """
         # if id in self._food_items:
         self.start_obstacles_2()
@@ -353,8 +351,14 @@ class RoboEatsServer(object):
         #     print("Food item " + str(id) + " does not exist.")
 
     def start_segment1c(self, id):
+         """
+        (Segment 1b)
+            3. Grab lunchbox (p1.pkl) (done - but redo if have enough time)
+            4. Put it into microwave (p3.pkl) (done-iffy)
+            5. Close microwave (p4a.pkl, p4b.pkl) (done) <- needs to be split so we can change planning scenes
+        """
         self.start_obstacles_2()
-
+        
         rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
         rospy.sleep(1.5)
