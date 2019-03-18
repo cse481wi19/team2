@@ -296,7 +296,7 @@ class RoboEatsServer(object):
         self.init_robot()
 
         self.start_obstacles_2()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
 
         # rospy.loginfo("1. Move to start pose")
         # self._map_annotator.goto_position(self.MICROWAVE_LOCATION_NAME)
@@ -324,7 +324,7 @@ class RoboEatsServer(object):
         """
         # if id in self._food_items:
         self.start_obstacles_2()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
 
         rospy.loginfo("STARTING SEGMENT 1b")
         rospy.loginfo("3. Grab lunchbox")
@@ -344,7 +344,7 @@ class RoboEatsServer(object):
 
     def start_segment1c(self, id):
         self.start_obstacles_2()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
 
         rospy.loginfo("5a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
@@ -352,7 +352,7 @@ class RoboEatsServer(object):
 
         rospy.loginfo("5b. Changing obstacles...")
         self.start_obstacles_1()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
 
         rospy.loginfo("5b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
@@ -388,7 +388,7 @@ class RoboEatsServer(object):
         """
         # if id in self._food_items:
         self.start_obstacles_2()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
         
         rospy.loginfo("PRE INITIALIZING FOR SEGMENT 3")
         self.__load_program_and_run__("segment3a-pre.pkl", id)
@@ -408,7 +408,7 @@ class RoboEatsServer(object):
             11. Grab lunchbox (p6a.pkl, p6b.pkl)
         """
         self.start_obstacles_2()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
 
         rospy.loginfo("11. Grab lunchbox")
         # print('lowering torso for better view')
@@ -427,7 +427,7 @@ class RoboEatsServer(object):
             13. Put down lunchbox (p7.pkl)
         """
         self.start_obstacles_2()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
 
         # rospy.loginfo("12. Move to dropoff pose")
         # self._map_annotator.goto_position(self.DROPOFF_LOCATION_NAME)
@@ -454,7 +454,7 @@ class RoboEatsServer(object):
         # rospy.sleep(2)
         
         self.start_obstacles_2()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
 
         rospy.loginfo("15a. Close microwave pt. 1")
         self.__load_program_and_run__("p4a.pkl", id)
@@ -462,7 +462,7 @@ class RoboEatsServer(object):
 
         rospy.loginfo("15b. Changing obstacles...")
         self.start_obstacles_1()
-        rospy.sleep(4)
+        rospy.sleep(3.5)
 
         rospy.loginfo("15b. Close microwave pt. 2")
         self.__load_program_and_run__("p4b.pkl", id)
