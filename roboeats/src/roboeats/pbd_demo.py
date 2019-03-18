@@ -147,7 +147,7 @@ def main():
     head = robot_api.Head()
     print('got head')
 
-    server = roboeats.RoboEatsServer()
+    server = RoboEatsServer()
 
     print_intro()
     program = Program(arm, gripper, head, torso)
